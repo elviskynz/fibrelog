@@ -145,14 +145,56 @@
       border-bottom: 1px solid #ecd9a0;
       word-break: break-all;
     }
+     #loginBox {
+      margin-top: 40px;
+      padding: 28px 24px;
+      border-top: 6px solid #f2b705;
+      box-shadow: 0 6px 20px rgba(11, 37, 69, 0.18);
+    }
+
+    .loginTitle {
+      margin: 0 0 4px;
+      font-size: 30px;
+      color: #0b2545;
+    }
+
+    .loginTitle span { color: #0f9d9a; }
+
+    .loginSub {
+      margin: 0 0 22px;
+      color: #5b6b7d;
+      font-size: 15px;
+    }
+
+    #loginBox input {
+      padding: 13px;
+      border: 2px solid #b8c4d2;
+    }
+
+    #loginBox > button:not(.link) {
+      width: 100%;
+      padding: 13px;
+      font-size: 18px;
+      font-weight: bold;
+      background: #0b2545;
+    }
+
+    #loginBox > button:not(.link):hover { background: #163a66; }
+
+    #loginBox .link {
+      display: block;
+      margin: 10px auto 0;
+    }
   </style>
+     
 </head>
 <body>
   <h1>FibreLog</h1>
 
   <!-- LOGIN SCREEN -->
   <div id="loginBox">
-    <h2>Sign in to FibreLog</h2>
+        <h2 class="loginTitle">Sign in to <span>FibreLog</span></h2>
+    <p class="loginSub">Network records, always in your pocket</p>
     <input id="email" type="email" placeholder="Email"><br><br>
     <input id="password" type="password" placeholder="Password"><br><br>
     <button onclick="login()">Log in</button>
