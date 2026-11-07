@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>FibreLog</title>
+  <title>FibreLog</title>
   <style>
     * { box-sizing: border-box; }
 
@@ -28,7 +28,7 @@
       margin-top: 24px;
     }
 
-    #loginBox, #app {
+    #loginBox, #resetBox, #app {
       width: calc(100% - 32px);
       max-width: 600px;
       margin: 16px auto;
@@ -38,7 +38,7 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
-    #loginBox br, #app br { display: none; }
+    #loginBox br, #resetBox br, #app br { display: none; }
 
     input, select {
       display: block;
@@ -82,6 +82,15 @@
     button.delete { background: #c62828; }
     button.delete:hover { background: #9e1f1f; }
 
+    button.link {
+      background: none;
+      color: #0f9d9a;
+      padding: 8px 0;
+      font-size: 15px;
+      text-decoration: underline;
+    }
+    button.link:hover { background: none; color: #0c7f7c; }
+
     .card {
       border: 1px solid #d5dde8;
       border-left: 6px solid #f2b705;
@@ -100,9 +109,22 @@
       align-items: center;
       gap: 10px;
       margin-bottom: 8px;
+      flex-wrap: wrap;
     }
 
+    .topbar .buttons { display: flex; gap: 8px; }
+
     #whoami { margin: 0; font-weight: bold; color: #0b2545; }
+
+    #passwordBox {
+      margin: 12px 0;
+      padding: 16px;
+      background: #eef7f7;
+      border: 1px solid #0f9d9a;
+      border-radius: 10px;
+    }
+
+    #passwordBox h2 { margin-top: 0; }
 
     #adminPanel {
       margin-top: 24px;
@@ -126,21 +148,39 @@
   </style>
 </head>
 <body>
-      <h1>FibreLog <span style="font-size:14px; font-weight:normal; opacity:0.8;">Network records, always in your pocket</span></h1>
+  <h1>FibreLog</h1>
 
   <!-- LOGIN SCREEN -->
   <div id="loginBox">
-        <h2>Sign in to your account</h2>
+    <h2>Sign in to FibreLog</h2>
     <input id="email" type="email" placeholder="Email"><br><br>
     <input id="password" type="password" placeholder="Password"><br><br>
     <button onclick="login()">Log in</button>
+    <br>
+    <button class="link" onclick="forgotPassword()">Forgot password?</button>
+  </div>
+
+  <!-- CHOOSE A NEW PASSWORD (shown when someone opens a reset link) -->
+  <div id="resetBox" style="display:none">
+    <h2>Choose a new password</h2>
+    <input id="resetPassword" type="password" placeholder="New password (min 8 characters)"><br><br>
+    <button onclick="saveNewPassword()">Save new password</button>
   </div>
 
   <!-- MAIN APP (hidden until logged in) -->
   <div id="app" style="display:none">
     <div class="topbar">
       <p id="whoami"></p>
-      <button onclick="logout()">Log out</button>
+      <div class="buttons">
+        <button class="edit" onclick="togglePasswordBox()">Change password</button>
+        <button onclick="logout()">Log out</button>
+      </div>
+    </div>
+
+    <div id="passwordBox" style="display:none">
+      <h2>Change your password</h2>
+      <input id="newPassword" type="password" placeholder="New password (min 8 characters)"><br><br>
+      <button onclick="changePassword()">Save password</button>
     </div>
 
     <h2>Add a new box</h2>
@@ -195,6 +235,9 @@ const db = supabase.createClient(
 
 let boxes = [];
 let editId = null;
+
+// true when someone opened a "reset password" link from their email
+let recovering = window.location.hash.includes("type=recovery");
 
 // Makes text safe to show on the page (stops pasted code from running)
 function esc(text) {
@@ -402,7 +445,7 @@ async function addTechnician() {
 
   document.getElementById("techEmail").value = "";
   document.getElementById("techPassword").value = "";
-  alert("Technician added. Give them the email and password.");
+  alert("Technician added. Give them the email and password, and ask them to change the password after their first login.");
   loadTechnicians();
 }
 
@@ -412,6 +455,78 @@ async function removeTechnician(userId, email) {
   const data = await callAdmin({ action: "remove", userId: userId });
   if (!data) return;
   loadTechnicians();
+}
+
+// ---------- PASSWORDS ----------
+
+function togglePasswordBox() {
+  const box = document.getElementById("passwordBox");
+  box.style.display = box.style.display === "none" ? "block" : "none";
+}
+
+async function changePassword() {
+  const newPassword = document.getElementById("newPassword").value;
+
+  if (newPassword.length < 8) {
+    alert("Your password must be at least 8 characters.");
+    return;
+  }
+
+  const { error } = await db.auth.updateUser({ password: newPassword });
+  if (error) {
+    alert("Could not change password: " + error.message);
+    return;
+  }
+
+  document.getElementById("newPassword").value = "";
+  document.getElementById("passwordBox").style.display = "none";
+  alert("Password changed.");
+}
+
+async function forgotPassword() {
+  const email = document.getElementById("email").value.trim();
+  if (!email) {
+    alert("Type your email in the email box first, then press Forgot password.");
+    return;
+  }
+
+  const { error } = await db.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + window.location.pathname
+  });
+
+  if (error) {
+    alert("Could not send the reset email: " + error.message);
+    return;
+  }
+  alert("If that email has an account, a reset link has been sent. Check your inbox (and spam).");
+}
+
+function showResetBox() {
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("app").style.display = "none";
+  document.getElementById("resetBox").style.display = "block";
+}
+
+async function saveNewPassword() {
+  const newPassword = document.getElementById("resetPassword").value;
+
+  if (newPassword.length < 8) {
+    alert("Your password must be at least 8 characters.");
+    return;
+  }
+
+  const { error } = await db.auth.updateUser({ password: newPassword });
+  if (error) {
+    alert("Could not save the new password: " + error.message);
+    return;
+  }
+
+  alert("Password saved. You are now signed in.");
+  recovering = false;
+  history.replaceState(null, "", window.location.pathname);
+  document.getElementById("resetPassword").value = "";
+  document.getElementById("resetBox").style.display = "none";
+  checkLogin();
 }
 
 // ---------- LOGIN ----------
@@ -435,6 +550,8 @@ async function logout() {
 }
 
 async function checkLogin() {
+  if (recovering) return;
+
   const { data } = await db.auth.getSession();
   const session = data.session;
 
@@ -453,6 +570,13 @@ async function checkLogin() {
 
   if (!profile) {
     alert("This account is not linked to a company. Please contact the administrator.");
+    await db.auth.signOut();
+    checkLogin();
+    return;
+  }
+
+  if (profile.role === "superadmin") {
+    alert("Superadmin accounts are managed in Supabase for now.");
     await db.auth.signOut();
     checkLogin();
     return;
@@ -477,7 +601,11 @@ async function checkLogin() {
   if (isAdmin) loadTechnicians();
 }
 
-checkLogin();
+if (recovering) {
+  showResetBox();
+} else {
+  checkLogin();
+}
   </script>
 </body>
 </html>
