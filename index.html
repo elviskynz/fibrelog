@@ -279,6 +279,9 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
     #superWho { margin: 0; font-weight: bold; color: #0b2545; }
 #companyList input { margin-top: 10px; }
 #companyList .techRow { border-bottom: 1px solid #e1e7ef; }
+
+    .techRow .buttons { display: flex; gap: 8px; }
+.card.suspended { border-left-color: #c62828; opacity: 0.85; }
     
   </style>
      
@@ -666,6 +669,14 @@ async function callSuper(body) {
   return data;
 }
 
+function timeAgo(dateText) {
+  if (!dateText) return "never";
+  const days = Math.floor((Date.now() - new Date(dateText).getTime()) / 86400000);
+  if (days <= 0) return "today";
+  if (days === 1) return "yesterday";
+  return days + " days ago";
+}
+
 async function loadCompanies() {
   const data = await callSuper({ action: "list" });
   if (!data) return;
@@ -679,21 +690,44 @@ async function loadCompanies() {
   }
 
   for (const company of data.companies) {
+    const isActive = company.active !== false;
+
     const card = document.createElement("div");
     card.className = "card";
+    if (!isActive) card.classList.add("suspended");
 
-    // Company name + delete button
+    // Company name + buttons
     const head = document.createElement("div");
     head.className = "techRow";
+
     const nameEl = document.createElement("b");
-    nameEl.textContent = company.name;
+    nameEl.textContent = company.name + (isActive ? "" : " (suspended)");
+
+    const btns = document.createElement("div");
+    btns.className = "buttons";
+
+    const toggleBtn = document.createElement("button");
+    toggleBtn.className = isActive ? "edit" : "";
+    toggleBtn.textContent = isActive ? "Suspend" : "Reactivate";
+    toggleBtn.onclick = () => setCompanyActive(company.id, company.name, !isActive);
+
     const delBtn = document.createElement("button");
     delBtn.className = "delete";
-    delBtn.textContent = "Delete company";
+    delBtn.textContent = "Delete";
     delBtn.onclick = () => deleteCompany(company.id, company.name);
+
+    btns.appendChild(toggleBtn);
+    btns.appendChild(delBtn);
     head.appendChild(nameEl);
-    head.appendChild(delBtn);
+    head.appendChild(btns);
     card.appendChild(head);
+
+    // Usage numbers
+    const usage = document.createElement("p");
+    usage.textContent =
+      company.technicians + " technicians · " +
+      company.boxes + " boxes · last box added " + timeAgo(company.lastBoxAt);
+    card.appendChild(usage);
 
     // This company's admins
     if (company.admins.length === 0) {
@@ -734,6 +768,18 @@ async function loadCompanies() {
     listBox.appendChild(card);
   }
 }
+
+async function setCompanyActive(companyId, name, active) {
+  const question = active
+    ? "Reactivate " + name + "? Their users will be able to log in again."
+    : "Suspend " + name + "? Nobody in this company can log in until you reactivate it. Their data is kept.";
+  if (!confirm(question)) return;
+
+  const data = await callSuper({ action: "setActive", companyId: companyId, active: active });
+  if (!data) return;
+  loadCompanies();
+}
+    
 
 async function addCompany() {
   const name = document.getElementById("companyName").value.trim();
@@ -875,8 +921,12 @@ async function login() {
   btn.disabled = false;
   btn.textContent = "Log in";
 
-  if (error) {
-    alert("Login failed: " + error.message);
+    if (error) {
+    if (error.message.toLowerCase().includes("banned")) {
+      alert("This account is suspended. Please contact FibreLog on 0758 796 040.");
+    } else {
+      alert("Login failed: " + error.message);
+    }
     return;
   }
   checkLogin();
