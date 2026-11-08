@@ -28,7 +28,7 @@
       margin-top: 24px;
     }
 
-    #loginBox, #resetBox, #app {
+    #loginBox, #resetBox, #app, #superPanel {
       width: calc(100% - 32px);
       max-width: 600px;
       margin: 16px auto;
@@ -275,6 +275,10 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
   font-size: 13px;
   margin: 24px 0;
 }
+
+    #superWho { margin: 0; font-weight: bold; color: #0b2545; }
+#companyList input { margin-top: 10px; }
+#companyList .techRow { border-bottom: 1px solid #e1e7ef; }
     
   </style>
      
@@ -392,6 +396,23 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
     </div>
   </div>
 
+    <!-- SUPERADMIN SCREEN (only shown to the superadmin) -->
+  <div id="superPanel" style="display:none">
+    <div class="topbar">
+      <p id="superWho">FibreLog · superadmin</p>
+      <div class="buttons">
+        <button onclick="logout()">Log out</button>
+      </div>
+    </div>
+
+    <h2>Add a company</h2>
+    <input id="companyName" placeholder="Company name">
+    <button onclick="addCompany()">Add company</button>
+
+    <h2>Companies</h2>
+    <div id="companyList"></div>
+  </div>
+  
     <p class="footer">© 2026 FibreLog · Built in Kenya by Elvis</p>
   <!-- Supabase library (this tag must stay empty) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -627,6 +648,144 @@ async function removeTechnician(userId, email) {
   loadTechnicians();
 }
 
+    // ---------- SUPERADMIN ----------
+
+// Calls the manage-companies function and shows a clear message if it fails
+async function callSuper(body) {
+  const { data, error } = await db.functions.invoke("manage-companies", { body: body });
+
+  if (error) {
+    let message = error.message;
+    try {
+      const details = await error.context.json();
+      if (details.error) message = details.error;
+    } catch (e) {}
+    alert(message);
+    return null;
+  }
+  return data;
+}
+
+async function loadCompanies() {
+  const data = await callSuper({ action: "list" });
+  if (!data) return;
+
+  const listBox = document.getElementById("companyList");
+  listBox.innerHTML = "";
+
+  if (data.companies.length === 0) {
+    listBox.textContent = "No companies yet.";
+    return;
+  }
+
+  for (const company of data.companies) {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    // Company name + delete button
+    const head = document.createElement("div");
+    head.className = "techRow";
+    const nameEl = document.createElement("b");
+    nameEl.textContent = company.name;
+    const delBtn = document.createElement("button");
+    delBtn.className = "delete";
+    delBtn.textContent = "Delete company";
+    delBtn.onclick = () => deleteCompany(company.id, company.name);
+    head.appendChild(nameEl);
+    head.appendChild(delBtn);
+    card.appendChild(head);
+
+    // This company's admins
+    if (company.admins.length === 0) {
+      const none = document.createElement("p");
+      none.textContent = "No admin yet.";
+      card.appendChild(none);
+    }
+
+    for (const a of company.admins) {
+      const row = document.createElement("div");
+      row.className = "techRow";
+      const label = document.createElement("span");
+      label.textContent = a.email;
+      const btn = document.createElement("button");
+      btn.className = "delete";
+      btn.textContent = "Remove";
+      btn.onclick = () => removeAdmin(a.id, a.email);
+      row.appendChild(label);
+      row.appendChild(btn);
+      card.appendChild(row);
+    }
+
+    // Add an admin to this company
+    const emailInput = document.createElement("input");
+    emailInput.type = "email";
+    emailInput.placeholder = "New admin email";
+    const passInput = document.createElement("input");
+    passInput.type = "text";
+    passInput.placeholder = "Temporary password (min 8 characters)";
+    const addBtn = document.createElement("button");
+    addBtn.textContent = "Add admin";
+    addBtn.onclick = () => addAdmin(company.id, emailInput, passInput);
+
+    card.appendChild(emailInput);
+    card.appendChild(passInput);
+    card.appendChild(addBtn);
+
+    listBox.appendChild(card);
+  }
+}
+
+async function addCompany() {
+  const name = document.getElementById("companyName").value.trim();
+  if (!name) {
+    alert("Type the company name first.");
+    return;
+  }
+
+  const data = await callSuper({ action: "createCompany", name: name });
+  if (!data) return;
+
+  document.getElementById("companyName").value = "";
+  loadCompanies();
+}
+
+async function addAdmin(companyId, emailInput, passInput) {
+  const email = emailInput.value.trim();
+  const password = passInput.value;
+
+  if (!email || password.length < 8) {
+    alert("Enter an email and a password of at least 8 characters.");
+    return;
+  }
+
+  const data = await callSuper({
+    action: "createAdmin",
+    companyId: companyId,
+    email: email,
+    password: password
+  });
+  if (!data) return;
+
+  alert("Admin added. Give them the email and password, and ask them to change the password after their first login.");
+  loadCompanies();
+}
+
+async function removeAdmin(userId, email) {
+  if (!confirm("Remove " + email + "? They will no longer be able to log in.")) return;
+
+  const data = await callSuper({ action: "removeAdmin", userId: userId });
+  if (!data) return;
+  loadCompanies();
+}
+
+async function deleteCompany(companyId, name) {
+  if (!confirm("Delete " + name + "? This cannot be undone.")) return;
+
+  const data = await callSuper({ action: "deleteCompany", companyId: companyId });
+  if (!data) return;
+  loadCompanies();
+}
+    
 // ---------- PASSWORDS ----------
 
 function togglePasswordBox() {
@@ -739,9 +898,10 @@ async function checkLogin() {
   const { data } = await db.auth.getSession();
   const session = data.session;
 
-  if (!session) {
+    if (!session) {
     document.getElementById("loginBox").style.display = "block";
     document.getElementById("app").style.display = "none";
+    document.getElementById("superPanel").style.display = "none";
     return;
   }
 
@@ -759,13 +919,13 @@ async function checkLogin() {
     return;
   }
 
-  if (profile.role === "superadmin") {
-    alert("Superadmin accounts are managed in Supabase for now.");
-    await db.auth.signOut();
-    checkLogin();
+   if (profile.role === "superadmin") {
+    document.getElementById("loginBox").style.display = "none";
+    document.getElementById("app").style.display = "none";
+    document.getElementById("superPanel").style.display = "block";
+    loadCompanies();
     return;
   }
-
   const { data: company } = await db
     .from("companies")
     .select("name")
