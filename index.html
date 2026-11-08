@@ -185,6 +185,30 @@
       display: block;
       margin: 10px auto 0;
     }
+    .about {
+  background: #eef7f7;
+  border-left: 4px solid #0f9d9a;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #1b2a3a;
+}
+
+.about p { margin: 0 0 8px; }
+
+.about ul {
+  margin: 0 0 8px;
+  padding-left: 20px;
+}
+
+.aboutNote {
+  color: #5b6b7d;
+  font-size: 13px;
+  margin-bottom: 0 !important;
+}
+    
   </style>
      
 </head>
@@ -195,6 +219,18 @@
   <div id="loginBox">
         <h2 class="loginTitle">Sign in to <span>FibreLog</span></h2>
     <p class="loginSub">Network records, always in your pocket</p>
+
+    <div class="about">
+  <p><b>FibreLog</b> is a record book for fibre network teams. Technicians save every FAT, FDT and closure in one place, so nobody has to rely on memory or paper notes.</p>
+  <ul>
+    <li>Record the splitter, ports used and free ports</li>
+    <li>Save the exact location with a Google Maps link</li>
+    <li>Log the power level in dBm</li>
+    <li>Search and find boxes with free ports fast</li>
+  </ul>
+  <p class="aboutNote">Each company's records are private. Your admin creates your account, so log in with the details they gave you.</p>
+</div>
+    
     <input id="email" type="email" placeholder="Email"><br><br>
     <input id="password" type="password" placeholder="Password"><br><br>
     <button onclick="login()">Log in</button>
