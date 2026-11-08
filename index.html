@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+   <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b2545">
+  <link rel="icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <title>FibreLog</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #eef2f7;
+      color: #1b2a3a;
+    }
+
+    h1 {
+      margin: 0;
+      padding: 18px 20px;
+      background: #0b2545;
+      color: #ffffff;
+      font-size: 24px;
+      border-bottom: 4px solid #f2b705;
+    }
+
+    h2 {
+      color: #0b2545;
+      margin-top: 24px;
+    }
+
+    #loginBox, #resetBox, #app, #superPanel {
+      width: calc(100% - 32px);
+      max-width: 600px;
+      margin: 16px auto;
+      padding: 20px;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    #loginBox br, #resetBox br, #app br { display: none; }
+
+    input, select {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 12px;
+      font-size: 16px;
+      border: 1px solid #b8c4d2;
+      border-radius: 8px;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: #0f9d9a;
+      box-shadow: 0 0 0 3px rgba(15, 157, 154, 0.2);
+    }
+
+    input[type="checkbox"] {
+      display: inline-block;
+      width: auto;
+      margin: 0 6px 12px 0;
+    }
+
+    label { display: block; margin-bottom: 12px; }
+
+    button {
+      padding: 10px 16px;
+      font-size: 16px;
+      background: #0f9d9a;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button:hover { background: #0c7f7c; }
+
+    button.edit { background: #0b2545; }
+    button.edit:hover { background: #163a66; }
+
+    button.delete { background: #c62828; }
+    button.delete:hover { background: #9e1f1f; }
+
+    button.link {
+      background: none;
+      color: #0f9d9a;
+      padding: 8px 0;
+      font-size: 15px;
+      text-decoration: underline;
+    }
+    button.link:hover { background: none; color: #0c7f7c; }
+
+    .card {
+      border: 1px solid #d5dde8;
+      border-left: 6px solid #f2b705;
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 14px;
+      background: #fafcff;
+      line-height: 1.6;
+    }
+
+    .card a { color: #0f9d9a; font-weight: bold; }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .topbar .buttons { display: flex; gap: 8px; }
+
+    #whoami { margin: 0; font-weight: bold; color: #0b2545; }
+
+    #passwordBox {
+      margin: 12px 0;
+      padding: 16px;
+      background: #eef7f7;
+      border: 1px solid #0f9d9a;
+      border-radius: 10px;
+    }
+
+    #passwordBox h2 { margin-top: 0; }
+
+    #adminPanel {
+      margin-top: 24px;
+      padding: 16px;
+      background: #fff8e1;
+      border: 1px solid #f2b705;
+      border-radius: 10px;
+    }
+
+    #adminPanel h2 { margin-top: 0; }
+
+    .techRow {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid #ecd9a0;
+      word-break: break-all;
+    }
+     #loginBox {
+      margin-top: 40px;
+      padding: 28px 24px;
+      border-top: 6px solid #f2b705;
+      box-shadow: 0 6px 20px rgba(11, 37, 69, 0.18);
+    }
+
+    .loginTitle {
+      margin: 0 0 4px;
+      font-size: 30px;
+      color: #0b2545;
+    }
+
+    .loginTitle span { color: #0f9d9a; }
+
+    .loginSub {
+      margin: 0 0 22px;
+      color: #5b6b7d;
+      font-size: 15px;
+    }
+
+    #loginBox input {
+      padding: 13px;
+      border: 2px solid #b8c4d2;
+    }
+
+    #loginBox > button:not(.link) {
+      width: 100%;
+      padding: 13px;
+      font-size: 18px;
+      font-weight: bold;
+      background: #0b2545;
+    }
+
+    #loginBox > button:not(.link):hover { background: #163a66; }
+
+    #loginBox .link {
+      display: block;
+      margin: 10px auto 0;
+    }
+    .about {
+  background: #eef7f7;
+  border-left: 4px solid #0f9d9a;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #1b2a3a;
+}
+
+.about p { margin: 0 0 8px; }
+
+.about ul {
+  margin: 0 0 8px;
+  padding-left: 20px;
+}
+
+.aboutNote {
+  color: #5b6b7d;
+  font-size: 13px;
+  margin-bottom: 0 !important;
+}
+    .contact {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #c5dede;
+}
+
+.contact b {
+  display: block;
+  margin-bottom: 6px;
+  color: #0b2545;
+}
+
+.contact a {
+  display: block;
+  padding: 4px 0;
+  color: #0f9d9a;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.logo, .loginTitle, .loginSub { text-align: center; }
+.logo { margin-bottom: 10px; }
+
+#loginBox input[type="checkbox"] {
+  padding: 0;
+  border: none;
+  margin: 0 6px 0 0;
+}
+.showPw { font-size: 15px; color: #5b6b7d; }
+
+button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.steps {
+  display: flex;
+  gap: 8px;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #e1e7ef;
+}
+
+.step {
+  flex: 1;
+  text-align: center;
+  font-size: 13px;
+  color: #5b6b7d;
+}
+
+.step span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin: 0 auto 6px;
+  border-radius: 50%;
+  background: #f2b705;
+  color: #0b2545;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.footer {
+  text-align: center;
+  color: #5b6b7d;
+  font-size: 13px;
+  margin: 24px 0;
+}
+
+    #superWho { margin: 0; font-weight: bold; color: #0b2545; }
+#companyList input { margin-top: 10px; }
+#companyList .techRow { border-bottom: 1px solid #e1e7ef; }
+
+    .techRow .buttons { display: flex; gap: 8px; }
+.card.suspended { border-left-color: #c62828; opacity: 0.85; }
+    
+  </style>
+     
+</head>
+<body>
+  <h1>FibreLog</h1>
+
+  <!-- LOGIN SCREEN -->
+  <div id="loginBox">
+    <div class="logo">
+      <svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true">
+        <rect width="56" height="56" rx="14" fill="#0b2545"/>
+        <path d="M12 38 C22 38 22 18 32 18 S42 38 44 38" fill="none" stroke="#0f9d9a" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="12" cy="38" r="4" fill="#f2b705"/>
+        <circle cx="44" cy="38" r="4" fill="#f2b705"/>
+      </svg>
+    </div>
+    <h2 class="loginTitle">Sign in to <span>FibreLog</span></h2>
+    <p class="loginSub">Network records, always in your pocket</p>
+
+    <div class="about">
+      <p><b>FibreLog</b> is a record book for fibre network teams. Technicians save every FAT, FDT and closure in one place, so nobody has to rely on memory or paper notes.</p>
+      <ul>
+        <li>Record the splitter, ports used and free ports</li>
+        <li>Save the exact location with a Google Maps link</li>
+        <li>Log the power level in dBm</li>
+        <li>Search and find boxes with free ports fast</li>
+      </ul>
+      <p class="aboutNote">Each company's records are private. Your admin creates your account, so log in with the details they gave you.</p>
+
+      <div class="contact">
+        <b>Want FibreLog for your company?</b>
+        <a href="tel:+254758796040">Call 0758 796 040</a>
+        <a href="https://wa.me/254758796040" target="_blank">Chat on WhatsApp</a>
+        <a href="mailto:mwauraelvis54@gmail.com">mwauraelvis54@gmail.com</a>
+      </div>
+    </div>
+
+    <input id="email" type="email" placeholder="Email"><br><br>
+    <input id="password" type="password" placeholder="Password"><br><br>
+    <label class="showPw">
+      <input type="checkbox" onchange="togglePassword()"> Show password
+    </label>
+    <button id="loginBtn" onclick="login()">Log in</button>
+    <br>
+    <button class="link" onclick="forgotPassword()">Forgot password?</button>
+
+    <div class="steps">
+      <div class="step"><span>1</span>Visit the box</div>
+      <div class="step"><span>2</span>Save its details</div>
+      <div class="step"><span>3</span>Find it anytime</div>
+    </div>
+  </div>
+
+  <!-- CHOOSE A NEW PASSWORD (shown when someone opens a reset link) -->
+  <div id="resetBox" style="display:none">
+    <h2>Choose a new password</h2>
+    <input id="resetPassword" type="password" placeholder="New password (min 8 characters)"><br><br>
+    <button onclick="saveNewPassword()">Save new password</button>
+  </div>
+
+  <!-- MAIN APP (hidden until logged in) -->
+  <div id="app" style="display:none">
+    <div class="topbar">
+      <p id="whoami"></p>
+      <div class="buttons">
+        <button class="edit" onclick="togglePasswordBox()">Change password</button>
+        <button onclick="logout()">Log out</button>
+      </div>
+    </div>
+
+    <div id="passwordBox" style="display:none">
+      <h2>Change your password</h2>
+      <input id="newPassword" type="password" placeholder="New password (min 8 characters)"><br><br>
+      <button onclick="changePassword()">Save password</button>
+    </div>
+
+    <h2>Add a new box</h2>
+    <input id="name" placeholder="Name e.g. FAT-023"><br><br>
+
+    <select id="type">
+      <option>FAT</option>
+      <option>FDT</option>
+      <option>Closure</option>
+    </select><br><br>
+
+    <input id="location" placeholder="Location e.g. pole opposite the shop"><br><br>
+    <input id="gps" placeholder="GPS e.g. -1.2921, 36.8219">
+    <button type="button" onclick="useMyLocation()">Use my location</button><br><br>
+
+    <input id="splitter" placeholder="Splitter e.g. 1:8"><br><br>
+    <input id="total" type="number" placeholder="Total ports"><br><br>
+    <input id="used" type="number" placeholder="Ports used"><br><br>
+    <input id="power" placeholder="Power in dBm e.g. -18.5"><br><br>
+
+    <button id="saveBtn" onclick="addBox()">Save</button>
+
+    <h2>Saved boxes</h2>
+    <input id="search" placeholder="Search name, type or location" oninput="showBoxes()"><br><br>
+    <label>
+      <input type="checkbox" id="onlyFree" onchange="showBoxes()">
+      Show only boxes with free ports
+    </label><br><br>
+    <div id="list"></div>
+
+    <!-- ADMIN PANEL (only shown to company admins) -->
+    <div id="adminPanel" style="display:none">
+      <h2>Manage technicians</h2>
+      <input id="techEmail" type="email" placeholder="Technician email"><br><br>
+      <input id="techPassword" type="text" placeholder="Temporary password (min 8 characters)"><br><br>
+      <button onclick="addTechnician()">Add technician</button>
+
+      <h3>Your technicians</h3>
+      <div id="techList"></div>
+    </div>
+  </div>
+
+    <!-- SUPERADMIN SCREEN (only shown to the superadmin) -->
+  <div id="superPanel" style="display:none">
+    <div class="topbar">
+      <p id="superWho">FibreLog · superadmin</p>
+      <div class="buttons">
+        <button onclick="logout()">Log out</button>
+      </div>
+    </div>
+
+    <h2>Add a company</h2>
+    <input id="companyName" placeholder="Company name">
+    <button onclick="addCompany()">Add company</button>
+
+    <h2>Companies</h2>
+    <div id="companyList"></div>
+  </div>
+  
+    <p class="footer">© 2026 FibreLog · Built in Kenya by Elvis</p>
+  <!-- Supabase library (this tag must stay empty) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Our own code -->
+  <script>
+const db = supabase.createClient(
+  "https://qisgywckcwfnpdkblqko.supabase.co",
+  "sb_publishable_oC4chif6HVowZd9Eno2V5g_6WlwWQXC"
+);
+
+let boxes = [];
+let editId = null;
+
+// true when someone opened a "reset password" link from their email
+let recovering = window.location.hash.includes("type=recovery");
+
+// Makes text safe to show on the page (stops pasted code from running)
+function esc(text) {
+  return String(text ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+async function loadBoxes() {
+  const { data, error } = await db
+    .from("boxes")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    alert("Could not load: " + error.message);
+    return;
+  }
+  boxes = data;
+  showBoxes();
+}
+
+async function addBox() {
+  const box = {
+    name: document.getElementById("name").value,
+    type: document.getElementById("type").value,
+    location: document.getElementById("location").value,
+    gps: document.getElementById("gps").value,
+    splitter: document.getElementById("splitter").value,
+    total: Number(document.getElementById("total").value),
+    used: Number(document.getElementById("used").value),
+    power: document.getElementById("power").value
+  };
+
+  let result;
+  if (editId === null) {
+    result = await db.from("boxes").insert(box);
+  } else {
+    result = await db.from("boxes").update(box).eq("id", editId);
+  }
+
+  if (result.error) {
+    alert("Could not save: " + result.error.message);
+    return;
+  }
+
+  editId = null;
+  document.getElementById("saveBtn").textContent = "Save";
+  ["name", "location", "gps", "splitter", "total", "used", "power"].forEach(id => {
+    document.getElementById(id).value = "";
+  });
+  loadBoxes();
+}
+
+function showBoxes() {
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+
+  const searchText = document.getElementById("search").value.toLowerCase();
+  const onlyFree = document.getElementById("onlyFree").checked;
+
+  for (const box of boxes) {
+    const free = box.total - box.used;
+
+    const matchesSearch =
+      (box.name || "").toLowerCase().includes(searchText) ||
+      (box.type || "").toLowerCase().includes(searchText) ||
+      (box.location || "").toLowerCase().includes(searchText);
+
+    if (!matchesSearch) continue;
+    if (onlyFree && free <= 0) continue;
+
+    const mapLink = "https://www.google.com/maps?q=" + encodeURIComponent((box.gps || "").replace(/\s/g, ""));
+
+    list.innerHTML += `
+      <div class="card">
+        <b>${esc(box.name)}</b> (${esc(box.type)})<br>
+        Location: ${esc(box.location)}<br>
+        <a href="${mapLink}" target="_blank">Open in Google Maps</a><br>
+        Splitter: ${esc(box.splitter)}<br>
+        Ports: ${esc(box.used)} used of ${esc(box.total)}, <b>${free} free</b><br>
+        Power: ${esc(box.power)} dBm<br><br>
+        <button class="edit" onclick="editBox(${box.id})">Edit</button>
+        <button class="delete" onclick="deleteBox(${box.id})">Delete</button>
+      </div>
+    `;
+  }
+}
+
+async function deleteBox(id) {
+  if (!confirm("Delete this box?")) return;
+
+  const { error } = await db.from("boxes").delete().eq("id", id);
+  if (error) {
+    alert("Could not delete: " + error.message);
+    return;
+  }
+
+  editId = null;
+  document.getElementById("saveBtn").textContent = "Save";
+  loadBoxes();
+}
+
+function editBox(id) {
+  const box = boxes.find(b => b.id === id);
+
+  document.getElementById("name").value = box.name;
+  document.getElementById("type").value = box.type;
+  document.getElementById("location").value = box.location;
+  document.getElementById("gps").value = box.gps;
+  document.getElementById("splitter").value = box.splitter;
+  document.getElementById("total").value = box.total;
+  document.getElementById("used").value = box.used;
+  document.getElementById("power").value = box.power;
+
+  editId = id;
+  document.getElementById("saveBtn").textContent = "Update";
+  window.scrollTo(0, 0);
+}
+
+function useMyLocation() {
+  if (!navigator.geolocation) {
+    alert("This device does not support location.");
+    return;
+  }
+
+  const gpsBox = document.getElementById("gps");
+  gpsBox.value = "Getting location...";
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const lat = position.coords.latitude.toFixed(6);
+      const lng = position.coords.longitude.toFixed(6);
+      gpsBox.value = lat + ", " + lng;
+    },
+    (error) => {
+      gpsBox.value = "";
+      alert("Could not get location: " + error.message);
+    },
+    { enableHighAccuracy: true, timeout: 15000 }
+  );
+}
+
+// ---------- ADMIN PANEL ----------
+
+// Calls our secure Edge Function and shows a clear message if it fails
+async function callAdmin(body) {
+  const { data, error } = await db.functions.invoke("manage-technicians", { body: body });
+
+  if (error) {
+    let message = error.message;
+    try {
+      const details = await error.context.json();
+      if (details.error) message = details.error;
+    } catch (e) {}
+    alert(message);
+    return null;
+  }
+  return data;
+}
+
+async function loadTechnicians() {
+  const data = await callAdmin({ action: "list" });
+  if (!data) return;
+
+  const techList = document.getElementById("techList");
+  techList.innerHTML = "";
+
+  if (data.technicians.length === 0) {
+    techList.textContent = "No technicians yet.";
+    return;
+  }
+
+  for (const tech of data.technicians) {
+    const row = document.createElement("div");
+    row.className = "techRow";
+
+    const label = document.createElement("span");
+    label.textContent = tech.email;
+
+    const btn = document.createElement("button");
+    btn.className = "delete";
+    btn.textContent = "Remove";
+    btn.onclick = () => removeTechnician(tech.id, tech.email);
+
+    row.appendChild(label);
+    row.appendChild(btn);
+    techList.appendChild(row);
+  }
+}
+
+async function addTechnician() {
+  const email = document.getElementById("techEmail").value.trim();
+  const password = document.getElementById("techPassword").value;
+
+  if (!email || password.length < 8) {
+    alert("Enter an email and a password of at least 8 characters.");
+    return;
+  }
+
+  const data = await callAdmin({ action: "create", email: email, password: password });
+  if (!data) return;
+
+  document.getElementById("techEmail").value = "";
+  document.getElementById("techPassword").value = "";
+  alert("Technician added. Give them the email and password, and ask them to change the password after their first login.");
+  loadTechnicians();
+}
+
+async function removeTechnician(userId, email) {
+  if (!confirm("Remove " + email + "? They will no longer be able to log in.")) return;
+
+  const data = await callAdmin({ action: "remove", userId: userId });
+  if (!data) return;
+  loadTechnicians();
+}
+
+    // ---------- SUPERADMIN ----------
+
+// Calls the manage-companies function and shows a clear message if it fails
+async function callSuper(body) {
+  const { data, error } = await db.functions.invoke("manage-companies", { body: body });
+
+  if (error) {
+    let message = error.message;
+    try {
+      const details = await error.context.json();
+      if (details.error) message = details.error;
+    } catch (e) {}
+    alert(message);
+    return null;
+  }
+  return data;
+}
+
+function timeAgo(dateText) {
+  if (!dateText) return "never";
+  const days = Math.floor((Date.now() - new Date(dateText).getTime()) / 86400000);
+  if (days <= 0) return "today";
+  if (days === 1) return "yesterday";
+  return days + " days ago";
+}
+
+async function loadCompanies() {
+  const data = await callSuper({ action: "list" });
+  if (!data) return;
+
+  const listBox = document.getElementById("companyList");
+  listBox.innerHTML = "";
+
+  if (data.companies.length === 0) {
+    listBox.textContent = "No companies yet.";
+    return;
+  }
+
+  for (const company of data.companies) {
+    const isActive = company.active !== false;
+
+    const card = document.createElement("div");
+    card.className = "card";
+    if (!isActive) card.classList.add("suspended");
+
+    // Company name + buttons
+    const head = document.createElement("div");
+    head.className = "techRow";
+
+    const nameEl = document.createElement("b");
+    nameEl.textContent = company.name + (isActive ? "" : " (suspended)");
+
+    const btns = document.createElement("div");
+    btns.className = "buttons";
+
+    const toggleBtn = document.createElement("button");
+    toggleBtn.className = isActive ? "edit" : "";
+    toggleBtn.textContent = isActive ? "Suspend" : "Reactivate";
+    toggleBtn.onclick = () => setCompanyActive(company.id, company.name, !isActive);
+
+    const delBtn = document.createElement("button");
+    delBtn.className = "delete";
+    delBtn.textContent = "Delete";
+    delBtn.onclick = () => deleteCompany(company.id, company.name);
+
+    btns.appendChild(toggleBtn);
+    btns.appendChild(delBtn);
+    head.appendChild(nameEl);
+    head.appendChild(btns);
+    card.appendChild(head);
+
+    // Usage numbers
+    const usage = document.createElement("p");
+    usage.textContent =
+      company.technicians + " technicians · " +
+      company.boxes + " boxes · last box added " + timeAgo(company.lastBoxAt);
+    card.appendChild(usage);
+
+    // This company's admins
+    if (company.admins.length === 0) {
+      const none = document.createElement("p");
+      none.textContent = "No admin yet.";
+      card.appendChild(none);
+    }
+
+    for (const a of company.admins) {
+      const row = document.createElement("div");
+      row.className = "techRow";
+      const label = document.createElement("span");
+      label.textContent = a.email;
+      const btn = document.createElement("button");
+      btn.className = "delete";
+      btn.textContent = "Remove";
+      btn.onclick = () => removeAdmin(a.id, a.email);
+      row.appendChild(label);
+      row.appendChild(btn);
+      card.appendChild(row);
+    }
+
+    // Add an admin to this company
+    const emailInput = document.createElement("input");
+    emailInput.type = "email";
+    emailInput.placeholder = "New admin email";
+    const passInput = document.createElement("input");
+    passInput.type = "text";
+    passInput.placeholder = "Temporary password (min 8 characters)";
+    const addBtn = document.createElement("button");
+    addBtn.textContent = "Add admin";
+    addBtn.onclick = () => addAdmin(company.id, emailInput, passInput);
+
+    card.appendChild(emailInput);
+    card.appendChild(passInput);
+    card.appendChild(addBtn);
+
+    listBox.appendChild(card);
+  }
+}
+
+async function setCompanyActive(companyId, name, active) {
+  const question = active
+    ? "Reactivate " + name + "? Their users will be able to log in again."
+    : "Suspend " + name + "? Nobody in this company can log in until you reactivate it. Their data is kept.";
+  if (!confirm(question)) return;
+
+  const data = await callSuper({ action: "setActive", companyId: companyId, active: active });
+  if (!data) return;
+  loadCompanies();
+}
+    
+
+async function addCompany() {
+  const name = document.getElementById("companyName").value.trim();
+  if (!name) {
+    alert("Type the company name first.");
+    return;
+  }
+
+  const data = await callSuper({ action: "createCompany", name: name });
+  if (!data) return;
+
+  document.getElementById("companyName").value = "";
+  loadCompanies();
+}
+
+async function addAdmin(companyId, emailInput, passInput) {
+  const email = emailInput.value.trim();
+  const password = passInput.value;
+
+  if (!email || password.length < 8) {
+    alert("Enter an email and a password of at least 8 characters.");
+    return;
+  }
+
+  const data = await callSuper({
+    action: "createAdmin",
+    companyId: companyId,
+    email: email,
+    password: password
+  });
+  if (!data) return;
+
+  alert("Admin added. Give them the email and password, and ask them to change the password after their first login.");
+  loadCompanies();
+}
+
+async function removeAdmin(userId, email) {
+  if (!confirm("Remove " + email + "? They will no longer be able to log in.")) return;
+
+  const data = await callSuper({ action: "removeAdmin", userId: userId });
+  if (!data) return;
+  loadCompanies();
+}
+
+async function deleteCompany(companyId, name) {
+  if (!confirm("Delete " + name + "? This cannot be undone.")) return;
+
+  const data = await callSuper({ action: "deleteCompany", companyId: companyId });
+  if (!data) return;
+  loadCompanies();
+}
+    
+// ---------- PASSWORDS ----------
+
+function togglePasswordBox() {
+  const box = document.getElementById("passwordBox");
+  box.style.display = box.style.display === "none" ? "block" : "none";
+}
+
+async function changePassword() {
+  const newPassword = document.getElementById("newPassword").value;
+
+  if (newPassword.length < 8) {
+    alert("Your password must be at least 8 characters.");
+    return;
+  }
+
+  const { error } = await db.auth.updateUser({ password: newPassword });
+  if (error) {
+    alert("Could not change password: " + error.message);
+    return;
+  }
+
+  document.getElementById("newPassword").value = "";
+  document.getElementById("passwordBox").style.display = "none";
+  alert("Password changed.");
+}
+
+async function forgotPassword() {
+  const email = document.getElementById("email").value.trim();
+  if (!email) {
+    alert("Type your email in the email box first, then press Forgot password.");
+    return;
+  }
+
+  const { error } = await db.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + window.location.pathname
+  });
+
+  if (error) {
+    alert("Could not send the reset email: " + error.message);
+    return;
+  }
+  alert("If that email has an account, a reset link has been sent. Check your inbox (and spam).");
+}
+
+function showResetBox() {
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("app").style.display = "none";
+  document.getElementById("resetBox").style.display = "block";
+}
+
+async function saveNewPassword() {
+  const newPassword = document.getElementById("resetPassword").value;
+
+  if (newPassword.length < 8) {
+    alert("Your password must be at least 8 characters.");
+    return;
+  }
+
+  const { error } = await db.auth.updateUser({ password: newPassword });
+  if (error) {
+    alert("Could not save the new password: " + error.message);
+    return;
+  }
+
+  alert("Password saved. You are now signed in.");
+  recovering = false;
+  history.replaceState(null, "", window.location.pathname);
+  document.getElementById("resetPassword").value = "";
+  document.getElementById("resetBox").style.display = "none";
+  checkLogin();
+}
+
+// ---------- LOGIN ----------
+
+async function login() {
+  const btn = document.getElementById("loginBtn");
+  if (btn.disabled) return;
+
+  btn.disabled = true;
+  btn.textContent = "Logging in...";
+
+  const { error } = await db.auth.signInWithPassword({
+    email: document.getElementById("email").value,
+    password: document.getElementById("password").value
+  });
+
+  btn.disabled = false;
+  btn.textContent = "Log in";
+
+    if (error) {
+    if (error.message.toLowerCase().includes("banned")) {
+      alert("This account is suspended. Please contact FibreLog on 0758 796 040.");
+    } else {
+      alert("Login failed: " + error.message);
+    }
+    return;
+  }
+  checkLogin();
+}
+
+function togglePassword() {
+  const box = document.getElementById("password");
+  box.type = box.type === "password" ? "text" : "password";
+}
+
+async function logout() {
+  await db.auth.signOut();
+  checkLogin();
+}
+
+async function checkLogin() {
+  if (recovering) return;
+
+  const { data } = await db.auth.getSession();
+  const session = data.session;
+
+    if (!session) {
+    document.getElementById("loginBox").style.display = "block";
+    document.getElementById("app").style.display = "none";
+    document.getElementById("superPanel").style.display = "none";
+    return;
+  }
+
+  // Find out which company and role this person has
+  const { data: profile } = await db
+    .from("profiles")
+    .select("role, company_id")
+    .eq("id", session.user.id)
+    .maybeSingle();
+
+  if (!profile) {
+    alert("This account is not linked to a company. Please contact the administrator.");
+    await db.auth.signOut();
+    checkLogin();
+    return;
+  }
+
+   if (profile.role === "superadmin") {
+    document.getElementById("loginBox").style.display = "none";
+    document.getElementById("app").style.display = "none";
+    document.getElementById("superPanel").style.display = "block";
+    loadCompanies();
+    return;
+  }
+  const { data: company } = await db
+    .from("companies")
+    .select("name")
+    .eq("id", profile.company_id)
+    .maybeSingle();
+
+  document.getElementById("whoami").textContent =
+    (company ? company.name : "Your company") + " · " + profile.role;
+
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("app").style.display = "block";
+
+  const isAdmin = profile.role === "admin";
+  document.getElementById("adminPanel").style.display = isAdmin ? "block" : "none";
+
+  loadBoxes();
+  if (isAdmin) loadTechnicians();
+}
+
+    // Press Enter in the email or password box to log in
+["email", "password"].forEach(id => {
+  document.getElementById(id).addEventListener("keydown", (e) => {
+    if (e.key === "Enter") login();
+  });
+});
+    
+if (recovering) {
+  showResetBox();
+} else {
+  checkLogin();
+}
+    
+// Lets phones install FibreLog like an app
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js");
+}
+    
+  </script>
+</body>
+</html>
