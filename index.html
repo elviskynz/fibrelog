@@ -227,6 +227,54 @@
   font-weight: bold;
   text-decoration: none;
 }
+
+.logo, .loginTitle, .loginSub { text-align: center; }
+.logo { margin-bottom: 10px; }
+
+#loginBox input[type="checkbox"] {
+  padding: 0;
+  border: none;
+  margin: 0 6px 0 0;
+}
+.showPw { font-size: 15px; color: #5b6b7d; }
+
+button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.steps {
+  display: flex;
+  gap: 8px;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #e1e7ef;
+}
+
+.step {
+  flex: 1;
+  text-align: center;
+  font-size: 13px;
+  color: #5b6b7d;
+}
+
+.step span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin: 0 auto 6px;
+  border-radius: 50%;
+  background: #f2b705;
+  color: #0b2545;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.footer {
+  text-align: center;
+  color: #5b6b7d;
+  font-size: 13px;
+  margin: 24px 0;
+}
     
   </style>
      
@@ -236,29 +284,49 @@
 
   <!-- LOGIN SCREEN -->
   <div id="loginBox">
-        <h2 class="loginTitle">Sign in to <span>FibreLog</span></h2>
+    <div class="logo">
+      <svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true">
+        <rect width="56" height="56" rx="14" fill="#0b2545"/>
+        <path d="M12 38 C22 38 22 18 32 18 S42 38 44 38" fill="none" stroke="#0f9d9a" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="12" cy="38" r="4" fill="#f2b705"/>
+        <circle cx="44" cy="38" r="4" fill="#f2b705"/>
+      </svg>
+    </div>
+    <h2 class="loginTitle">Sign in to <span>FibreLog</span></h2>
     <p class="loginSub">Network records, always in your pocket</p>
 
     <div class="about">
-  <p><b>FibreLog</b> is a record book for fibre network teams. Technicians save every FAT, FDT and closure in one place, so nobody has to rely on memory or paper notes.</p>
-  <ul>
-    <li>Record the splitter, ports used and free ports</li>
-    <li>Save the exact location with a Google Maps link</li>
-    <li>Log the power level in dBm</li>
-    <li>Search and find boxes with free ports fast</li>
-  </ul>
-  <div class="contact">
-  <b>Want FibreLog for your company?</b>
-  <a href="tel:+254758796040">Call 0758 796 040</a>
-  <a href="https://wa.me/254758796040" target="_blank">Chat on WhatsApp</a>
-  <a href="mailto:mwauraelvis54@gmail.com">mwauraelvis54@gmail.com</a>
-</div>
-    
+      <p><b>FibreLog</b> is a record book for fibre network teams. Technicians save every FAT, FDT and closure in one place, so nobody has to rely on memory or paper notes.</p>
+      <ul>
+        <li>Record the splitter, ports used and free ports</li>
+        <li>Save the exact location with a Google Maps link</li>
+        <li>Log the power level in dBm</li>
+        <li>Search and find boxes with free ports fast</li>
+      </ul>
+      <p class="aboutNote">Each company's records are private. Your admin creates your account, so log in with the details they gave you.</p>
+
+      <div class="contact">
+        <b>Want FibreLog for your company?</b>
+        <a href="tel:+254758796040">Call 0758 796 040</a>
+        <a href="https://wa.me/254758796040" target="_blank">Chat on WhatsApp</a>
+        <a href="mailto:mwauraelvis54@gmail.com">mwauraelvis54@gmail.com</a>
+      </div>
+    </div>
+
     <input id="email" type="email" placeholder="Email"><br><br>
     <input id="password" type="password" placeholder="Password"><br><br>
-    <button onclick="login()">Log in</button>
+    <label class="showPw">
+      <input type="checkbox" onchange="togglePassword()"> Show password
+    </label>
+    <button id="loginBtn" onclick="login()">Log in</button>
     <br>
     <button class="link" onclick="forgotPassword()">Forgot password?</button>
+
+    <div class="steps">
+      <div class="step"><span>1</span>Visit the box</div>
+      <div class="step"><span>2</span>Save its details</div>
+      <div class="step"><span>3</span>Find it anytime</div>
+    </div>
   </div>
 
   <!-- CHOOSE A NEW PASSWORD (shown when someone opens a reset link) -->
@@ -324,6 +392,7 @@
     </div>
   </div>
 
+    <p class="footer">© 2026 FibreLog · Built in Kenya by Elvis</p>
   <!-- Supabase library (this tag must stay empty) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -633,16 +702,30 @@ async function saveNewPassword() {
 // ---------- LOGIN ----------
 
 async function login() {
+  const btn = document.getElementById("loginBtn");
+  if (btn.disabled) return;
+
+  btn.disabled = true;
+  btn.textContent = "Logging in...";
+
   const { error } = await db.auth.signInWithPassword({
     email: document.getElementById("email").value,
     password: document.getElementById("password").value
   });
+
+  btn.disabled = false;
+  btn.textContent = "Log in";
 
   if (error) {
     alert("Login failed: " + error.message);
     return;
   }
   checkLogin();
+}
+
+function togglePassword() {
+  const box = document.getElementById("password");
+  box.type = box.type === "password" ? "text" : "password";
 }
 
 async function logout() {
@@ -702,6 +785,13 @@ async function checkLogin() {
   if (isAdmin) loadTechnicians();
 }
 
+    // Press Enter in the email or password box to log in
+["email", "password"].forEach(id => {
+  document.getElementById(id).addEventListener("keydown", (e) => {
+    if (e.key === "Enter") login();
+  });
+});
+    
 if (recovering) {
   showResetBox();
 } else {
