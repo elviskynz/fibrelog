@@ -1078,11 +1078,12 @@ async function addBox() {
     result = await db.from("boxes").update(box).eq("id", editId);
   }
 
-  if (result.error) {
+    if (result.error) {
     alert("Could not save: " + result.error.message);
     return;
   }
 
+  if (photoFile) {
     let photoBlob;
     try {
       photoBlob = await compressImage(photoFile);
