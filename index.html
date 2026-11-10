@@ -973,6 +973,32 @@ async function exportCsv(tableName) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+// Shrinks a photo to max 1280px and saves it as a smaller JPEG
+function compressImage(file, maxSize = 1280, quality = 0.75) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(
+        blob => blob ? resolve(blob) : reject(new Error("Could not shrink the photo")),
+        "image/jpeg",
+        quality
+      );
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Could not read the photo"));
+    };
+    img.src = url;
+  });
+}
+
 async function addBox() {
   const photoFile = document.getElementById("boxPhoto").files[0] || null;
   if (photoFile && !photoFile.type.startsWith("image/")) {
@@ -989,7 +1015,6 @@ async function addBox() {
   const box = {
     name: document.getElementById("name").value,
     type: document.getElementById("type").value,
-        type: document.getElementById("type").value,
     zone: document.getElementById("zone").value,
     location: document.getElementById("location").value,
     gps: document.getElementById("gps").value,
@@ -1058,14 +1083,20 @@ async function addBox() {
     return;
   }
 
-  if (photoFile) {
-    const extension = (photoFile.name.split(".").pop() || "jpg")
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, "") || "jpg";
-    const photoPath = `${savedBoxId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
+    let photoBlob;
+    try {
+      photoBlob = await compressImage(photoFile);
+    } catch (e) {
+      editId = savedBoxId;
+      document.getElementById("saveBtn").textContent = "Update";
+      await loadBoxes();
+      alert("Box details were saved, but the photo could not be processed: " + e.message);
+      return;
+    }
+    const photoPath = `${savedBoxId}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
     const { error: uploadError } = await db.storage
       .from(BOX_PHOTO_BUCKET)
-      .upload(photoPath, photoFile, { contentType: photoFile.type, upsert: false });
+      .upload(photoPath, photoBlob, { contentType: "image/jpeg", upsert: false });
     if (uploadError) {
       editId = savedBoxId;
       document.getElementById("saveBtn").textContent = "Update";
