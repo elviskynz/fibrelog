@@ -1746,21 +1746,41 @@ async function deleteBoxPhoto(boxId, photoPath) {
   const box = boxes.find(b => b.id === boxId);
   if (!box) return;
 
-  const remainingPhotos = (Array.isArray(box.photos) ? box.photos : []).filter(photo => photo.path !== photoPath);
+  const originalPhotos = Array.isArray(box.photos) ? box.photos : [];
+  if (!originalPhotos.some(photo => photo.path === photoPath)) return;
+  const remainingPhotos = originalPhotos.filter(photo => photo.path !== photoPath);
+
+  const { data: updatedBox, error: updateError } = await db.from("boxes")
+    .update({ photos: remainingPhotos })
+    .eq("id", boxId)
+    .select("id")
+    .maybeSingle();
+  if (updateError) {
+    alert("Could not delete the photo: " + updateError.message);
+    return;
+  }
+  if (!updatedBox) {
+    alert("Could not delete the photo: the box record was not updated. Check your permissions and try again.");
+    return;
+  }
 
   const { error: storageError } = await db.storage.from(BOX_PHOTO_BUCKET).remove([photoPath]);
   if (storageError) {
-    alert("Could not delete the photo from storage: " + storageError.message);
+    const { data: restoredBox, error: restoreError } = await db.from("boxes")
+      .update({ photos: originalPhotos })
+      .eq("id", boxId)
+      .select("id")
+      .maybeSingle();
+    const restoreMessage = restoreError
+      ? " The photo could not be restored to the box record: " + restoreError.message
+      : !restoredBox
+        ? " The photo could not be restored to the box record because the update matched no box."
+        : "";
+    alert("Could not delete the photo from storage: " + storageError.message + restoreMessage);
     return;
   }
 
-  const { error } = await db.from("boxes").update({ photos: remainingPhotos }).eq("id", boxId);
-  if (error) {
-    alert("Could not delete the photo: " + error.message);
-    return;
-  }
-
-  if (box.photos) box.photos = remainingPhotos;
+  box.photos = remainingPhotos;
   delete boxPhotoUrls[photoPath];
   await loadBoxAuditHistory();
   await loadBoxPhotoUrls();
