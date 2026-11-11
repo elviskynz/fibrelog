@@ -1631,6 +1631,11 @@ function buildSummary() {
 
 function showBoxes() {
   const list = document.getElementById("list");
+  list.onclick = event => {
+    if (!(event.target instanceof Element)) return;
+    const button = event.target.closest(".boxPhotoDelete");
+    if (button) deleteBoxPhoto(Number(button.dataset.boxId), button.dataset.photoPath);
+  };
   list.innerHTML = "";
 
   const searchText = document.getElementById("search").value.toLowerCase();
@@ -1705,7 +1710,7 @@ function showBoxes() {
       return `<figure class="boxPhoto">
         <a href="${esc(url)}" target="_blank" rel="noopener"><img src="${esc(url)}" alt="${esc(box.name)} condition: ${esc(condition)}"></a>
         <figcaption>${esc(condition)}${capturedAt ? " · " + esc(capturedAt) : ""}</figcaption>
-        <button class="boxPhotoDelete" type="button" onclick="deleteBoxPhoto(${box.id}, ${JSON.stringify(photo.path)})">Delete photo</button>
+        <button class="boxPhotoDelete" type="button" data-box-id="${box.id}" data-photo-path="${esc(photo.path)}">Delete photo</button>
       </figure>`;
     }).join("");
 
