@@ -1,0 +1,2839 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+   <link rel="manifest" href="manifest.json">
+   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <meta name="theme-color" content="#0b2545">
+  <link rel="icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <title>FibreLog</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #eef2f7;
+      color: #1b2a3a;
+    }
+
+    h1 {
+      margin: 0;
+      padding: 18px 20px;
+      background: #0b2545;
+      color: #ffffff;
+      font-size: 24px;
+      border-bottom: 4px solid #f2b705;
+    }
+
+    h2 {
+      color: #0b2545;
+      margin-top: 24px;
+    }
+
+    #loginBox, #resetBox, #app, #superPanel, #spliceView {
+      width: calc(100% - 32px);
+      max-width: 600px;
+      margin: 16px auto;
+      padding: 20px;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    #loginBox br, #resetBox br, #app br { display: none; }
+
+    input, select {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 12px;
+      font-size: 16px;
+      border: 1px solid #b8c4d2;
+      border-radius: 8px;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: #0f9d9a;
+      box-shadow: 0 0 0 3px rgba(15, 157, 154, 0.2);
+    }
+
+    input[type="checkbox"] {
+      display: inline-block;
+      width: auto;
+      margin: 0 6px 12px 0;
+    }
+
+    label { display: block; margin-bottom: 12px; }
+
+    button {
+      padding: 10px 16px;
+      font-size: 16px;
+      background: #0f9d9a;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button:hover { background: #0c7f7c; }
+
+    button.edit { background: #0b2545; }
+    button.edit:hover { background: #163a66; }
+
+    button.delete { background: #c62828; }
+    button.delete:hover { background: #9e1f1f; }
+
+    button.link {
+      background: none;
+      color: #0f9d9a;
+      padding: 8px 0;
+      font-size: 15px;
+      text-decoration: underline;
+    }
+    button.link:hover { background: none; color: #0c7f7c; }
+
+    .card {
+      border: 1px solid #d5dde8;
+      border-left: 6px solid #f2b705;
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 14px;
+      background: #fafcff;
+      line-height: 1.6;
+    }
+
+    .card a { color: #0f9d9a; font-weight: bold; }
+
+    .recordDetails {
+      margin: 10px 0 14px;
+    }
+
+    .recordDetail {
+      display: grid;
+      grid-template-columns: minmax(88px, 112px) minmax(0, 1fr);
+      gap: 8px;
+      padding: 3px 0;
+    }
+
+    .recordDetail dt {
+      color: #5b6b7d;
+      font-weight: bold;
+    }
+
+    .recordDetail dd {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .boxPhotos {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin: 10px 0 14px;
+    }
+
+    .boxPhoto {
+      width: min(100%, 220px);
+      margin: 0;
+    }
+
+    .boxPhoto img {
+      display: block;
+      width: 100%;
+      max-height: 180px;
+      object-fit: cover;
+      border: 1px solid #d5dde8;
+      border-radius: 8px;
+    }
+
+    .boxPhoto figcaption {
+      margin-top: 4px;
+      color: #5b6b7d;
+      font-size: 13px;
+    }
+
+    .boxPhotoDelete {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 6px 10px;
+      font-size: 13px;
+      background: #c62828;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .boxPhotoDelete:hover { background: #9e1f1f; }
+
+    .summaryHeader {
+      margin: 12px 0 8px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #0b2545;
+    }
+
+    .summaryGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .summaryCard {
+      background: linear-gradient(135deg, #edf7f7, #ffffff);
+      border: 1px solid #d5dde8;
+      border-left: 5px solid #0f9d9a;
+      border-radius: 10px;
+      padding: 12px 14px;
+      box-shadow: 0 2px 6px rgba(11, 37, 69, 0.08);
+    }
+
+    .summaryLabel {
+      font-size: 12px;
+      color: #5b6b7d;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .summaryValue {
+      margin-top: 8px;
+      font-size: 30px;
+      font-weight: bold;
+      color: #0b2545;
+      line-height: 1.1;
+    }
+
+    .summarySub {
+      margin-top: 6px;
+      font-size: 13px;
+      color: #5b6b7d;
+    }
+
+    .zoneSummary {
+      margin-top: 12px;
+      border: 1px solid #d5dde8;
+      border-radius: 10px;
+      padding: 12px 14px;
+      background: #fafcff;
+    }
+
+    .zoneSummary h3 {
+      margin: 0 0 10px;
+      font-size: 16px;
+      color: #0b2545;
+    }
+
+    .zoneList {
+      display: grid;
+      gap: 8px;
+    }
+
+    .zoneRow {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 0;
+      border-bottom: 1px solid #e6edf5;
+      color: #1b2a3a;
+    }
+
+    .zoneRow:last-child { border-bottom: none; }
+
+    .summaryEmpty {
+      margin: 0;
+      color: #5b6b7d;
+      font-size: 14px;
+    }
+
+    #boxMap {
+      width: 100%;
+      height: min(65vh, 600px);
+      min-height: 360px;
+      margin-top: 12px;
+      border: 1px solid #d5dde8;
+      border-radius: 10px;
+      z-index: 1;
+    }
+
+    .mapMarker {
+      display: block;
+      width: 22px;
+      height: 22px;
+      border: 3px solid #ffffff;
+      border-radius: 50% 50% 50% 0;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+      transform: rotate(-45deg);
+    }
+
+    .mapMarker-normal { background: #168447; }
+    .mapMarker-attention { background: #e19a00; }
+    .mapMarker-critical { background: #c62828; }
+    .mapMarker-unset { background: #64748b; }
+    .mapLegend { display: flex; flex-wrap: wrap; gap: 12px; margin: 10px 0; font-size: 13px; }
+    .mapLegendItem { display: inline-flex; align-items: center; gap: 6px; }
+    .mapLegendDot { width: 12px; height: 12px; border-radius: 50%; }
+    .mapLegendPoint { background: #6f42c1; }
+    .mapPopup h3 { margin: 0 0 6px; color: #0b2545; }
+    .mapPopup p { margin: 3px 0; }
+    .mapPopup button { margin-top: 8px; padding: 7px 10px; font-size: 14px; }
+
+    .boxHistory {
+      margin: 12px 0;
+      border: 1px solid #d5dde8;
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: #ffffff;
+    }
+
+    .boxHistory summary {
+      color: #0b2545;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .historyEntry {
+      margin-top: 10px;
+      padding: 10px;
+      border-left: 3px solid #0f9d9a;
+      background: #f4f8fb;
+      overflow-wrap: anywhere;
+    }
+
+    .historyEntry p { margin: 4px 0; }
+    .historyChanges { margin: 6px 0 0; padding-left: 20px; font-size: 14px; }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .topbar .buttons { display: flex; gap: 8px; }
+
+    #whoami { margin: 0; font-weight: bold; color: #0b2545; }
+
+    #passwordBox {
+      margin: 12px 0;
+      padding: 16px;
+      background: #eef7f7;
+      border: 1px solid #0f9d9a;
+      border-radius: 10px;
+    }
+
+    #passwordBox h2 { margin-top: 0; }
+
+    #adminPanel {
+      margin-top: 24px;
+      padding: 16px;
+      background: #fff8e1;
+      border: 1px solid #f2b705;
+      border-radius: 10px;
+    }
+
+    #adminPanel h2 { margin-top: 0; }
+
+    .techRow {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid #ecd9a0;
+      word-break: break-all;
+    }
+     #loginBox {
+      margin-top: 40px;
+      padding: 28px 24px;
+      border-top: 6px solid #f2b705;
+      box-shadow: 0 6px 20px rgba(11, 37, 69, 0.18);
+    }
+
+    .loginTitle {
+      margin: 0 0 4px;
+      font-size: 30px;
+      color: #0b2545;
+    }
+
+    .loginTitle span { color: #0f9d9a; }
+
+    .loginSub {
+      margin: 0 0 22px;
+      color: #5b6b7d;
+      font-size: 15px;
+    }
+
+    #loginBox input {
+      padding: 13px;
+      border: 2px solid #b8c4d2;
+    }
+
+    #loginBox > button:not(.link) {
+      width: 100%;
+      padding: 13px;
+      font-size: 18px;
+      font-weight: bold;
+      background: #0b2545;
+    }
+
+    #loginBox > button:not(.link):hover { background: #163a66; }
+
+    #loginBox .link {
+      display: block;
+      margin: 10px auto 0;
+    }
+    .about {
+  background: #eef7f7;
+  border-left: 4px solid #0f9d9a;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #1b2a3a;
+}
+
+.about p { margin: 0 0 8px; }
+
+.about ul {
+  margin: 0 0 8px;
+  padding-left: 20px;
+}
+
+.aboutNote {
+  color: #5b6b7d;
+  font-size: 13px;
+  margin-bottom: 0 !important;
+}
+    .contact {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #c5dede;
+}
+
+.contact b {
+  display: block;
+  margin-bottom: 6px;
+  color: #0b2545;
+}
+
+.contact a {
+  display: block;
+  padding: 4px 0;
+  color: #0f9d9a;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.logo, .loginTitle, .loginSub { text-align: center; }
+.logo { margin-bottom: 10px; }
+
+#loginBox input[type="checkbox"] {
+  padding: 0;
+  border: none;
+  margin: 0 6px 0 0;
+}
+.showPw { font-size: 15px; color: #5b6b7d; }
+
+button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.steps {
+  display: flex;
+  gap: 8px;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #e1e7ef;
+}
+
+.step {
+  flex: 1;
+  text-align: center;
+  font-size: 13px;
+  color: #5b6b7d;
+}
+
+.step span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin: 0 auto 6px;
+  border-radius: 50%;
+  background: #f2b705;
+  color: #0b2545;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.footer {
+  text-align: center;
+  color: #5b6b7d;
+  font-size: 13px;
+  margin: 24px 0;
+}
+
+    #superWho { margin: 0; font-weight: bold; color: #0b2545; }
+#companyList input { margin-top: 10px; }
+#companyList .techRow { border-bottom: 1px solid #e1e7ef; }
+
+    .techRow .buttons { display: flex; gap: 8px; }
+.card.suspended { border-left-color: #c62828; opacity: 0.85; }
+    #splash {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: #0b2545;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.5s;
+}
+
+@media (display-mode: standalone) {
+  #splash { display: flex; }
+}
+
+#splash.hide { opacity: 0; pointer-events: none; }
+
+.splashName {
+  margin-top: 16px;
+  font-size: 34px;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.splashName span { color: #0f9d9a; }
+
+.splashTag {
+  margin-top: 8px;
+  color: #9fb3c8;
+  font-size: 15px;
+}
+#spliceTitle { margin: 0; font-weight: bold; color: #0b2545; }
+
+.cableGroup {
+  background: #f4f8fb;
+  border: 1px solid #d5dde8;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 14px;
+}
+
+.cableGroup h3 { margin: 0 0 10px; color: #0b2545; font-size: 16px; }
+
+.fibreColour {
+  min-height: 22px;
+  margin: -4px 0 4px;
+  font-size: 14px;
+  color: #1b2a3a;
+}
+
+.dot {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid #888;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+.hint { font-size: 13px; color: #5b6b7d; margin: -6px 0 12px; }
+.printOnly { display: none; }
+
+@media print {
+  body > *:not(#spliceView) { display: none !important; }
+
+  #spliceView {
+    display: block !important;
+    max-width: none;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+
+  .noPrint { display: none !important; }
+  .printOnly { display: block !important; }
+  #spliceList { display: none !important; }
+
+  .printTable { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .printTable th, .printTable td {
+    border: 1px solid #888;
+    padding: 4px 6px;
+    text-align: left;
+    vertical-align: top;
+  }
+  .printTable tr { break-inside: avoid; }
+
+  .dot { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+.tabs { display: flex; gap: 8px; margin: 12px 0; }
+.tabs button { flex: 1; background: #e1e7ef; color: #0b2545; font-weight: bold; padding: 10px 4px; font-size: 15px; }
+.tabs button:hover { background: #d0d9e6; }
+.tabs button.active { background: #0b2545; color: #ffffff; }
+.tabs button.active:hover { background: #163a66; }
+#saveNotice {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  z-index: 1000;
+  transform: translate(-50%, 16px);
+  padding: 12px 18px;
+  border-radius: 8px;
+  background: #0b2545;
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+}
+#saveNotice.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+}
+textarea {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  font-size: 16px;
+  font-family: Arial, Helvetica, sans-serif;
+  border: 1px solid #b8c4d2;
+  border-radius: 8px;
+  min-height: 90px;
+}
+textarea:focus {
+  outline: none;
+  border-color: #0f9d9a;
+  box-shadow: 0 0 0 3px rgba(15, 157, 154, 0.2);
+}
+  </style>
+     
+</head>
+<body>
+      <!-- OPENING SCREEN (only shows when opened as an installed app) -->
+  <div id="splash">
+    <svg width="96" height="96" viewBox="0 0 56 56" aria-hidden="true">
+      <rect width="56" height="56" rx="14" fill="#12315c"/>
+      <path d="M12 38 C22 38 22 18 32 18 S42 38 44 38" fill="none" stroke="#0f9d9a" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="12" cy="38" r="4" fill="#f2b705"/>
+      <circle cx="44" cy="38" r="4" fill="#f2b705"/>
+    </svg>
+    <div class="splashName">Fibre<span>Log</span></div>
+    <div class="splashTag">Network records, always in your pocket</div>
+  </div>
+  <h1>FibreLog</h1>
+  <div id="saveNotice" role="status" aria-live="polite"></div>
+
+  <!-- LOGIN SCREEN -->
+  <div id="loginBox">
+    <div class="logo">
+      <svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true">
+        <rect width="56" height="56" rx="14" fill="#0b2545"/>
+        <path d="M12 38 C22 38 22 18 32 18 S42 38 44 38" fill="none" stroke="#0f9d9a" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="12" cy="38" r="4" fill="#f2b705"/>
+        <circle cx="44" cy="38" r="4" fill="#f2b705"/>
+      </svg>
+    </div>
+    <h2 class="loginTitle">Sign in to <span>FibreLog</span></h2>
+    <p class="loginSub">Network records, always in your pocket</p>
+
+    <div class="about">
+      <p><b>FibreLog</b> is a record book for fibre network teams. Technicians save every FAT, FDT and closure in one place, so nobody has to rely on memory or paper notes.</p>
+      <ul>
+        <li>Record the splitter, ports used and free ports</li>
+        <li>Save the exact location with a Google Maps link</li>
+        <li>Log the power level in dBm</li>
+        <li>Search and find boxes with free ports fast</li>
+      </ul>
+      <p class="aboutNote">Each company's records are private. Your admin creates your account, so log in with the details they gave you.</p>
+
+      <div class="contact">
+        <b>Want FibreLog for your company?</b>
+        <a href="tel:+254758796040">Call 0758 796 040</a>
+        <a href="https://wa.me/254758796040" target="_blank">Chat on WhatsApp</a>
+        <a href="mailto:mwauraelvis54@gmail.com">mwauraelvis54@gmail.com</a>
+      </div>
+    </div>
+
+    <input id="email" type="email" placeholder="Email"><br><br>
+    <input id="password" type="password" placeholder="Password"><br><br>
+    <label class="showPw">
+      <input type="checkbox" onchange="togglePassword()"> Show password
+    </label>
+    <button id="loginBtn" onclick="login()">Log in</button>
+    <br>
+    <button class="link" onclick="forgotPassword()">Forgot password?</button>
+
+    <div class="steps">
+      <div class="step"><span>1</span>Visit the box</div>
+      <div class="step"><span>2</span>Save its details</div>
+      <div class="step"><span>3</span>Find it anytime</div>
+    </div>
+  </div>
+
+  <!-- CHOOSE A NEW PASSWORD (shown when someone opens a reset link) -->
+  <div id="resetBox" style="display:none">
+    <h2>Choose a new password</h2>
+    <input id="resetPassword" type="password" placeholder="New password (min 8 characters)"><br><br>
+    <button onclick="saveNewPassword()">Save new password</button>
+  </div>
+
+  <!-- MAIN APP (hidden until logged in) -->
+  <div id="app" style="display:none">
+    <div class="topbar">
+      <p id="whoami"></p>
+      <div class="buttons">
+        <button class="edit" onclick="togglePasswordBox()">Change password</button>
+        <button onclick="logout()">Log out</button>
+      </div>
+    </div>
+
+    <div id="passwordBox" style="display:none">
+      <h2>Change your password</h2>
+      <input id="newPassword" type="password" placeholder="New password (min 8 characters)"><br><br>
+      <button onclick="changePassword()">Save password</button>
+    </div>
+    <div class="tabs">
+      <button id="tabRecords" class="active" onclick="showTab('records')">Records</button>
+      <button id="tabMap" onclick="showTab('map')">Map</button>
+      <button id="tabAdd" onclick="showTab('add')">Add box</button>
+      <button id="tabSplicing" onclick="showTab('splicing')">Splicing</button>
+      <button id="tabTeam" style="display:none" onclick="showTab('team')">Team</button>
+    </div>
+        <div id="panelAdd" style="display:none">
+    
+    <h2>Add a new box</h2>
+    <input id="name" placeholder="Name e.g. FAT-023"><br><br>
+
+    <select id="type">
+      <option>FAT</option>
+      <option>FDT</option>
+      <option>Closure</option>
+    </select><br><br>
+    <input id="zone" list="zoneList" placeholder="Zone e.g. Zone 3 or Kilimani"><br><br>
+    <datalist id="zoneList"></datalist>
+
+    <input id="location" placeholder="Location e.g. pole opposite the shop"><br><br>
+    <input id="gps" placeholder="GPS e.g. -1.2921, 36.8219">
+    <button type="button" onclick="useMyLocation()">Use my location</button><br><br>
+
+    <input id="splitter" placeholder="Splitter e.g. 1:8"><br><br>
+    <input id="total" type="number" placeholder="Total ports" oninput="updateMaintenanceStatus()"><br><br>
+    <input id="used" type="number" placeholder="Ports used" oninput="updateMaintenanceStatus()"><br><br>
+    <input id="power" placeholder="Power in dBm e.g. -18.5"><br><br>
+
+    <h3>Maintenance and capacity</h3>
+    <label for="maintenanceStatus">Capacity status (automatic)</label>
+    <output id="maintenanceStatus" class="summarySub">Enter total and used ports to calculate status.</output>
+    <p class="hint">4+ free ports: Normal · 1–3 free: Needs attention · 0 free: Critical</p>
+    <label for="lastInspectedAt">Last inspection date</label>
+    <input id="lastInspectedAt" type="date">
+    <label for="nextInspectionDue">Next inspection due</label>
+    <input id="nextInspectionDue" type="date">
+    <textarea id="maintenanceNotes" placeholder="Maintenance notes"></textarea>
+
+    <h3>FAT condition photo</h3>
+    <p>Optional: take a photo to record the box condition (10 MB max). Add more photos later by editing this box.</p>
+    <input id="boxPhoto" type="file" accept="image/*" capture="environment">
+    <select id="boxPhotoCondition" aria-label="Condition shown in photo">
+      <option value="Neat">Neat / acceptable</option>
+      <option value="Needs cleanup">Needs cleanup</option>
+      <option value="Cleanup completed">Cleanup completed</option>
+    </select>
+
+    <button id="saveBtn" onclick="addBox()">Save</button>
+    
+    </div>
+<div id="panelRecords">
+    <h2>Saved boxes</h2>
+        <input id="search" placeholder="Search name, type, zone or location" oninput="showBoxes()"><br><br>
+    <select id="zoneFilter" onchange="showBoxes()">
+      <option value="">All zones</option>
+    </select><br><br>
+    <label>
+      <input type="checkbox" id="onlyFree" onchange="showBoxes()">
+      Show only boxes with free ports
+    </label><br><br>
+<div class="summaryHeader">Summary dashboard</div>
+<div id="reportSummary" class="summaryGrid"></div>
+<div id="zoneSummary" class="zoneSummary"></div>
+<div id="list"></div>
+</div>
+
+    <div id="panelMap" style="display:none">
+      <h2>Box map</h2>
+      <p>Boxes and splice points with valid GPS coordinates are shown. Box pin colors indicate capacity based on free ports; splice points use purple markers.</p>
+      <label><input id="showSplicePoints" type="checkbox" checked onchange="updateBoxMap()"> Show splice points</label>
+      <label for="mapZoneFilter">Zone</label>
+      <select id="mapZoneFilter" onchange="updateBoxMap()">
+        <option value="">All zones</option>
+      </select>
+      <label for="mapStatusFilter">Box capacity status</label>
+      <select id="mapStatusFilter" onchange="updateBoxMap()">
+        <option value="">All statuses</option>
+        <option value="Normal">Normal</option>
+        <option value="Needs attention">Needs attention</option>
+        <option value="Critical">Critical</option>
+        <option value="Not set">Not set</option>
+      </select>
+      <div class="mapLegend" aria-label="Capacity status colors">
+        <span class="mapLegendItem"><span class="mapLegendDot mapMarker-normal"></span>Normal</span>
+        <span class="mapLegendItem"><span class="mapLegendDot mapMarker-attention"></span>Needs attention</span>
+        <span class="mapLegendItem"><span class="mapLegendDot mapMarker-critical"></span>Critical</span>
+        <span class="mapLegendItem"><span class="mapLegendDot mapMarker-unset"></span>Not set</span>
+        <span class="mapLegendItem"><span class="mapLegendDot mapLegendPoint"></span>Splice point</span>
+      </div>
+      <p id="mapStatus" class="summaryEmpty" role="status" aria-live="polite"></p>
+      <div id="boxMap" aria-label="Map of saved fibre boxes"></div>
+      <p class="summarySub">Map tiles © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>.</p>
+    </div>
+
+    <div id="panelTeam" style="display:none">
+      <h2>Team</h2>
+      <p>Company admins can add technicians and reset their passwords.</p>
+
+    <!-- ADMIN PANEL (only shown to company admins) -->
+    <div id="adminPanel" style="display:none">
+      <h2>Manage technicians</h2>
+      <input id="techEmail" type="email" placeholder="Technician email"><br><br>
+      <input id="techPassword" type="text" placeholder="Temporary password (min 8 characters)"><br><br>
+      <button onclick="addTechnician()">Add technician</button>
+
+      <h3>Your technicians</h3>
+      <div id="techList"></div>
+
+      <h3>Data backups</h3>
+      <p>Download your company data as CSV files.</p>
+      <button type="button" onclick="exportCsv('boxes')">Download boxes</button>
+      <button type="button" onclick="exportCsv('splice_points')">Download splice points</button>
+      <button type="button" onclick="exportCsv('splices')">Download splices</button>
+    </div>
+  </div>
+      <div id="panelSplicing" style="display:none">
+      <h2 id="pointFormTitle">Add a splice point</h2>
+      <input id="pName" placeholder="Name e.g. CL-014 or Joint at Kilimani junction">
+      <select id="pType">
+        <option>Closure</option>
+        <option>Joint</option>
+        <option>Mid-span</option>
+        <option>Other</option>
+      </select>
+      <input id="pZone" list="zoneList" placeholder="Zone e.g. Zone 3 or Kilimani">
+      <input id="pLocation" placeholder="Location e.g. pole opposite the shop">
+      <input id="pGps" placeholder="GPS e.g. -1.2921, 36.8219">
+      <button type="button" style="margin-bottom:12px" onclick="useMyLocation('pGps')">Use my location</button>
+
+      <label>
+        <input type="checkbox" id="pHasSplitter" onchange="togglePointSplitter()">
+        This point has a splitter
+      </label>
+      <div id="pSplitterBlock" style="display:none">
+        <input id="pSplitter" placeholder="Splitter e.g. 1:8">
+        <input id="pTotal" type="number" placeholder="Total ports">
+        <input id="pUsed" type="number" placeholder="Ports used">
+        <input id="pPower" placeholder="Power in dBm e.g. -18.5">
+      </div>
+      <textarea id="pNotes" placeholder="Notes e.g. Tube 1 spliced through to tube 2, cores 1-5"></textarea>
+      <button id="savePointBtn" onclick="savePoint()">Save splice point</button>
+      <button id="cancelPointBtn" class="link" style="display:none" onclick="cancelPointEdit()">Cancel edit</button>
+
+      <h2>Splice points</h2>
+      <input id="pSearch" placeholder="Search name, type, zone or location" oninput="showPoints()">
+      <div id="pointList"></div>
+    </div>
+  </div>
+   <!-- SPLICING SCREEN (opens from a box's Splicing button) -->
+  <div id="spliceView" style="display:none">
+    <div class="topbar noPrint">
+      <p id="spliceTitle"></p>
+      <div class="buttons">
+        <button onclick="window.print()">Print</button>
+        <button class="edit" onclick="closeSplices()">Back</button>
+      </div>
+    </div>
+
+    <div id="printHeader" class="printOnly"></div>
+
+    <div class="noPrint">
+      <h2 id="spliceFormTitle">Add a splice</h2>
+
+      <div class="cableGroup">
+        <h3>Cable A</h3>
+        <input id="cableAName" placeholder="Cable name e.g. from FDT-02">
+        <select id="cableACores" onchange="showFibreColour('A')">
+          <option value="24">24 core</option>
+          <option value="48">48 core</option>
+          <option value="96">96 core</option>
+        </select>
+        <input id="fibreA" type="number" min="1" placeholder="Fibre number" oninput="showFibreColour('A')">
+        <div class="fibreColour" id="colourA"></div>
+      </div>
+
+      <div class="cableGroup">
+        <h3>Cable B (spliced to A)</h3>
+        <input id="cableBName" placeholder="Cable name e.g. to FAT-023">
+        <select id="cableBCores" onchange="showFibreColour('B')">
+          <option value="24">24 core</option>
+          <option value="48">48 core</option>
+          <option value="96">96 core</option>
+        </select>
+        <input id="fibreB" type="number" min="1" placeholder="Fibre number" oninput="showFibreColour('B')">
+        <div class="fibreColour" id="colourB"></div>
+      </div>
+
+      <label for="spliceCount">Fibres in a row (1 = a single splice)</label>
+      <input id="spliceCount" type="number" min="1" value="1">
+      <p class="hint">For example, 12 splices fibres 1 to 12 of cable A to fibres 1 to 12 of cable B, in order, starting from the fibre numbers above. The loss and note are saved on each one.</p>
+
+      <input id="spliceLoss" placeholder="Loss in dB (optional) e.g. 0.05">
+      <input id="spliceNote" placeholder="Note (optional)">
+      <button id="saveSpliceBtn" onclick="addSplice()">Save splice</button>
+      <button id="cancelSpliceBtn" class="link" style="display:none" onclick="cancelSpliceEdit()">Cancel edit</button>
+    </div>
+
+    <h2>Splices at this box</h2>
+    <div id="spliceList"></div>
+    <div id="spliceTable" class="printOnly"></div>
+  </div>
+
+    <!-- SUPERADMIN SCREEN (only shown to the superadmin) -->
+  <div id="superPanel" style="display:none">
+    <div class="topbar">
+      <p id="superWho">FibreLog · superadmin</p>
+      <div class="buttons">
+        <button onclick="logout()">Log out</button>
+      </div>
+    </div>
+
+    <h2>Add a company</h2>
+    <input id="companyName" placeholder="Company name">
+    <button onclick="addCompany()">Add company</button>
+
+    <h2>Companies</h2>
+    <div id="companyList"></div>
+  </div>
+  
+        <p class="footer">© 2026 FibreLog</p>
+  <!-- Supabase library (this tag must stay empty) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Our own code -->
+  <script>
+const db = supabase.createClient(
+  "https://qisgywckcwfnpdkblqko.supabase.co",
+  "sb_publishable_oC4chif6HVowZd9Eno2V5g_6WlwWQXC"
+);
+
+let boxes = [];
+let editId = null;
+let boxPhotoUrls = {};
+let boxAuditHistory = {};
+let boxMap = null;
+let boxMapMarkers = null;
+let splicePointMapMarkers = null;
+
+const BOX_PHOTO_BUCKET = "fibre-photos";
+const MAX_BOX_PHOTO_SIZE = 10 * 1024 * 1024;
+
+// true when someone opened a "reset password" link from their email
+let recovering = window.location.hash.includes("type=recovery");
+
+// Makes text safe to show on the page (stops pasted code from running)
+function esc(text) {
+  return String(text ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function recordDetail(label, value) {
+  if (value === null || value === undefined || String(value).trim() === "") return "";
+  return `<div class="recordDetail"><dt>${esc(label)}</dt><dd>${esc(value)}</dd></div>`;
+}
+
+function mapsRecordDetail(gps) {
+  const coordinates = String(gps || "").replace(/\s/g, "");
+  if (!coordinates) return "";
+  const mapLink = "https://www.google.com/maps?q=" + encodeURIComponent(coordinates);
+  return `<div class="recordDetail"><dt>Map</dt><dd><a href="${mapLink}" target="_blank" rel="noopener">View in Google Maps</a></dd></div>`;
+}
+
+function normalizeDuplicateValue(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function getGpsError(value, label) {
+  const text = value.trim();
+  if (!text) return "";
+
+  const coordinates = text.split(/[,\s]+/);
+  const decimal = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/;
+  if (coordinates.length !== 2 || !coordinates.every(part => decimal.test(part))) {
+    return label + " must be latitude, longitude in decimal degrees (for example: -1.2921, 36.8219).";
+  }
+
+  const [latitude, longitude] = coordinates.map(Number);
+  if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+    return label + " must have latitude between -90 and 90 and longitude between -180 and 180.";
+  }
+  return "";
+}
+
+function getPortCountsError(totalValue, usedValue, label) {
+  const totalText = totalValue.trim();
+  const usedText = usedValue.trim();
+  if (!totalText && !usedText) return "";
+  if (!totalText || !usedText) return label + ": enter both total ports and ports used.";
+
+  const total = Number(totalText);
+  const used = Number(usedText);
+  if (!Number.isInteger(total) || total < 1) return label + ": total ports must be a whole number greater than zero.";
+  if (!Number.isInteger(used) || used < 0) return label + ": ports used must be a whole number of zero or more.";
+  if (used > total) return label + ": ports used cannot exceed total ports.";
+  return "";
+}
+
+function getPowerError(value, label) {
+  const text = value.trim();
+  if (!text) return "";
+  if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(text) || !Number.isFinite(Number(text))) {
+    return label + " must be a number in dBm.";
+  }
+  return "";
+}
+
+function normalizePowerValue(value) {
+  const text = value.trim();
+  if (!text) return "";
+  const number = Number(text);
+  if (!Number.isFinite(number) || number === 0) return text;
+  return String(-Math.abs(number));
+}
+
+function localDateString(date = new Date()) {
+  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return localDate.toISOString().slice(0, 10);
+}
+
+let saveNoticeTimeout;
+
+function showSaveNotice(message) {
+  const notice = document.getElementById("saveNotice");
+  notice.textContent = message;
+  notice.classList.add("show");
+  clearTimeout(saveNoticeTimeout);
+  saveNoticeTimeout = setTimeout(() => notice.classList.remove("show"), 3000);
+}
+
+// Builds the zone suggestions and the zone filter from the saved boxes
+function fillZones() {
+  const zones = [...new Set([
+    ...boxes.map(b => (b.zone || "").trim()),
+    ...points.map(point => (point.zone || "").trim())
+  ].filter(z => z))].sort();
+
+  const list = document.getElementById("zoneList");
+  list.innerHTML = "";
+  for (const z of zones) {
+    const opt = document.createElement("option");
+    opt.value = z;
+    list.appendChild(opt);
+  }
+
+  const filter = document.getElementById("zoneFilter");
+  const current = filter.value;
+  filter.innerHTML = "";
+  const all = document.createElement("option");
+  all.value = "";
+  all.textContent = "All zones";
+  filter.appendChild(all);
+  for (const z of zones) {
+    const opt = document.createElement("option");
+    opt.value = z;
+    opt.textContent = z;
+    filter.appendChild(opt);
+  }
+  filter.value = current;
+
+  const mapFilter = document.getElementById("mapZoneFilter");
+  const currentMapZone = mapFilter.value;
+  mapFilter.innerHTML = "";
+  const allMapZones = document.createElement("option");
+  allMapZones.value = "";
+  allMapZones.textContent = "All zones";
+  mapFilter.appendChild(allMapZones);
+  for (const z of zones) {
+    const opt = document.createElement("option");
+    opt.value = z;
+    opt.textContent = z;
+    mapFilter.appendChild(opt);
+  }
+  mapFilter.value = currentMapZone;
+}
+
+function showTab(name) {
+  const panels = { records: "panelRecords", map: "panelMap", add: "panelAdd", splicing: "panelSplicing", team: "panelTeam" };
+  const tabs = { records: "tabRecords", map: "tabMap", add: "tabAdd", splicing: "tabSplicing", team: "tabTeam" };
+
+  for (const key in panels) {
+    document.getElementById(panels[key]).style.display = key === name ? "block" : "none";
+    document.getElementById(tabs[key]).classList.toggle("active", key === name);
+  }
+
+  if (name === "map") {
+    initializeBoxMap();
+    updateBoxMap();
+    loadPoints();
+    if (boxMap) setTimeout(() => boxMap.invalidateSize(), 0);
+  }
+  if (name === "splicing") loadPoints();
+  window.scrollTo(0, 0);
+}
+
+function getBoxCoordinates(gps) {
+  const parts = String(gps || "").trim().split(/[,\s]+/);
+  if (parts.length !== 2) return null;
+  const [latitude, longitude] = parts.map(Number);
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude) ||
+      latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) return null;
+  return [latitude, longitude];
+}
+
+function getBoxCapacityStatus(box) {
+  const total = Number(box.total);
+  const used = Number(box.used);
+  if (box.total === null || box.total === undefined || String(box.total).trim() === "" ||
+      box.used === null || box.used === undefined || String(box.used).trim() === "" ||
+      !Number.isInteger(total) || total < 1 ||
+      !Number.isInteger(used) || used < 0 || used > total) {
+    return "Not set";
+  }
+
+  const free = total - used;
+  if (free === 0) return "Critical";
+  if (free <= 3) return "Needs attention";
+  return "Normal";
+}
+
+function updateMaintenanceStatus() {
+  const total = document.getElementById("total").value;
+  const used = document.getElementById("used").value;
+  const status = getBoxCapacityStatus({ total, used });
+  document.getElementById("maintenanceStatus").textContent =
+    status === "Not set" ? "Enter valid total and used ports to calculate status." : status;
+}
+
+function initializeBoxMap() {
+  if (boxMap) return true;
+  if (!window.L) {
+    document.getElementById("mapStatus").textContent =
+      "The map library could not be loaded. Check your internet connection and refresh the page.";
+    return false;
+  }
+
+  boxMap = L.map("boxMap").setView([0, 0], 2);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(boxMap);
+  boxMapMarkers = L.featureGroup().addTo(boxMap);
+  splicePointMapMarkers = L.featureGroup().addTo(boxMap);
+  return true;
+}
+
+function updateBoxMap() {
+  if (!initializeBoxMap()) return;
+
+  boxMapMarkers.clearLayers();
+  splicePointMapMarkers.clearLayers();
+  const zoneChoice = document.getElementById("mapZoneFilter").value;
+  const statusChoice = document.getElementById("mapStatusFilter").value;
+  const showSplicePoints = document.getElementById("showSplicePoints").checked;
+  const filteredBoxes = boxes.filter(box => {
+    if (zoneChoice && (box.zone || "").trim() !== zoneChoice) return false;
+    const status = getBoxCapacityStatus(box);
+    if (statusChoice && status !== statusChoice) return false;
+    return true;
+  });
+  const locatedBoxes = filteredBoxes.filter(box => getBoxCoordinates(box.gps));
+  const coordinates = [];
+
+  for (const box of locatedBoxes) {
+    const [latitude, longitude] = getBoxCoordinates(box.gps);
+    const status = getBoxCapacityStatus(box);
+    const markerStyle = status === "Critical" ? "critical"
+      : status === "Needs attention" ? "attention"
+        : status === "Normal" ? "normal" : "unset";
+    const total = Number(box.total) || 0;
+    const used = Number(box.used) || 0;
+    const free = Math.max(total - used, 0);
+    const position = [latitude, longitude];
+    const marker = L.marker(position, {
+      icon: L.divIcon({
+        className: "",
+        html: `<span class="mapMarker mapMarker-${markerStyle}" role="img" aria-label="${esc(status)}"></span>`,
+        iconSize: [24, 28],
+        iconAnchor: [12, 27],
+        popupAnchor: [0, -25]
+      })
+    });
+    const mapLink = "https://www.google.com/maps?q=" + encodeURIComponent(`${latitude},${longitude}`);
+    marker.bindPopup(`<div class="mapPopup">
+      <h3>${esc(box.name)} (${esc(box.type)})</h3>
+      <p><b>Zone:</b> ${esc(box.zone || "Not set")}</p>
+      <p><b>Location:</b> ${esc(box.location || "Not set")}</p>
+      <p><b>Capacity status:</b> ${esc(status)}</p>
+      <p><b>Ports:</b> ${esc(used)} used · ${esc(free)} free</p>
+      <p><a href="${mapLink}" target="_blank" rel="noopener">Open in Google Maps</a></p>
+      <button type="button" onclick="editBox(${Number(box.id)})">Open record</button>
+    </div>`);
+    marker.addTo(boxMapMarkers);
+    coordinates.push(position);
+  }
+
+  const filteredPoints = showSplicePoints
+    ? points.filter(point => !zoneChoice || (point.zone || "").trim() === zoneChoice)
+    : [];
+  const locatedPoints = filteredPoints.filter(point => getBoxCoordinates(point.gps));
+  for (const point of locatedPoints) {
+    const [latitude, longitude] = getBoxCoordinates(point.gps);
+    const position = [latitude, longitude];
+    const mapLink = "https://www.google.com/maps?q=" + encodeURIComponent(`${latitude},${longitude}`);
+    const marker = L.circleMarker(position, {
+      radius: 8,
+      color: "#ffffff",
+      weight: 2,
+      fillColor: "#6f42c1",
+      fillOpacity: 1
+    });
+    marker.bindPopup(`<div class="mapPopup">
+      <h3>${esc(point.name)} (${esc(point.point_type || "Splice point")})</h3>
+      <p><b>Zone:</b> ${esc(point.zone || "Not set")}</p>
+      <p><b>Location:</b> ${esc(point.location || "Not set")}</p>
+      ${point.has_splitter ? `<p><b>Splitter:</b> ${esc(point.splitter || "Yes")}</p>` : ""}
+      <p><a href="${mapLink}" target="_blank" rel="noopener">Open in Google Maps</a></p>
+      <button type="button" onclick="showTab('splicing'); editPoint(${Number(point.id)})">Open splice point</button>
+    </div>`);
+    marker.addTo(splicePointMapMarkers);
+    coordinates.push(position);
+  }
+
+  const status = document.getElementById("mapStatus");
+  const invalidLocationCount = filteredBoxes.filter(box => !getBoxCoordinates(box.gps)).length;
+  const invalidPointCount = filteredPoints.filter(point => !getBoxCoordinates(point.gps)).length;
+  const shownParts = [];
+  if (locatedBoxes.length) shownParts.push(`${locatedBoxes.length} ${locatedBoxes.length === 1 ? "box" : "boxes"}`);
+  if (locatedPoints.length) shownParts.push(`${locatedPoints.length} ${locatedPoints.length === 1 ? "splice point" : "splice points"}`);
+  const invalidParts = [];
+  if (invalidLocationCount) invalidParts.push(`${invalidLocationCount} ${invalidLocationCount === 1 ? "box has" : "boxes have"} no valid GPS`);
+  if (invalidPointCount) invalidParts.push(`${invalidPointCount} ${invalidPointCount === 1 ? "splice point has" : "splice points have"} no valid GPS`);
+  status.textContent = `${shownParts.length ? shownParts.join(" · ") + " shown" : "No mapped records match these filters"}` +
+    (invalidParts.length ? ` · ${invalidParts.join(" · ")}` : "");
+
+  if (coordinates.length === 1) {
+    boxMap.setView(coordinates[0], 15);
+  } else if (coordinates.length > 1) {
+    boxMap.fitBounds(coordinates, { padding: [30, 30], maxZoom: 16 });
+  } else {
+    boxMap.setView([0, 0], 2);
+  }
+}
+
+async function loadBoxes() {
+  const { data, error } = await db
+    .from("boxes")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    alert("Could not load: " + error.message);
+    return;
+  }
+  boxes = data || [];
+  await loadBoxAuditHistory();
+  await loadBoxPhotoUrls();
+  await loadSpliceCounts();
+  fillZones();
+  showBoxes();
+}
+
+async function loadBoxAuditHistory() {
+  boxAuditHistory = {};
+  if (boxes.length === 0) return;
+
+  const { data, error } = await db
+    .from("box_change_history")
+    .select("box_id, action, actor_id, actor_email, changed_fields, before_data, after_data, created_at")
+    .in("box_id", boxes.map(box => String(box.id)))
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    alert("Could not load box change history. Check that the maintenance/audit SQL migration has been run: " + error.message);
+    return;
+  }
+
+  for (const entry of data || []) {
+    if (!boxAuditHistory[entry.box_id]) boxAuditHistory[entry.box_id] = [];
+    boxAuditHistory[entry.box_id].push(entry);
+  }
+}
+
+async function loadBoxPhotoUrls() {
+  boxPhotoUrls = {};
+  const paths = [...new Set(boxes.flatMap(box =>
+    Array.isArray(box.photos) ? box.photos.map(photo => photo.path).filter(Boolean) : []
+  ))];
+  if (paths.length === 0) return;
+
+  const { data, error } = await db.storage.from(BOX_PHOTO_BUCKET).createSignedUrls(paths, 3600);
+  if (error) {
+    alert("Could not load box photos: " + error.message);
+    return;
+  }
+
+  for (const photo of data || []) {
+    if (photo.path && photo.signedUrl) boxPhotoUrls[photo.path] = photo.signedUrl;
+  }
+}
+
+async function exportCsv(tableName) {
+  const exports = {
+    boxes: "FibreLog-boxes",
+    splice_points: "FibreLog-splice-points",
+    splices: "FibreLog-splices"
+  };
+  const exportName = exports[tableName];
+  if (!exportName) {
+    alert("This data type cannot be exported.");
+    return;
+  }
+
+  const records = [];
+  const pageSize = 1000;
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await db
+      .from(tableName)
+      .select("*")
+      .order("id", { ascending: true })
+      .range(offset, offset + pageSize - 1);
+
+    if (error) {
+      alert("Could not export " + exportName + ": " + error.message);
+      return;
+    }
+
+    const page = data || [];
+    records.push(...page);
+    if (page.length < pageSize) break;
+  }
+
+  if (records.length === 0) {
+    alert("There are no " + exportName.replace("FibreLog-", "") + " records to export.");
+    return;
+  }
+
+  const columns = [...new Set(records.flatMap(record => Object.keys(record)))];
+  const csvCell = value => {
+    const text = value == null
+      ? ""
+      : typeof value === "object"
+        ? JSON.stringify(value)
+        : String(value);
+    const safeText = typeof value === "string" && /^[\t\r ]*[=+\-@]/.test(text)
+      ? "'" + text
+      : text;
+    return '"' + safeText.replace(/"/g, '""') + '"';
+  };
+  const csv = [
+    columns.map(csvCell).join(","),
+    ...records.map(record => columns.map(column => csvCell(record[column])).join(","))
+  ].join("\r\n");
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = exportName + "-" + new Date().toISOString().slice(0, 10) + ".csv";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// Shrinks a photo to max 1280px and saves it as a smaller JPEG
+function compressImage(file, maxSize = 1280, quality = 0.75) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(
+        blob => blob ? resolve(blob) : reject(new Error("Could not shrink the photo")),
+        "image/jpeg",
+        quality
+      );
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Could not read the photo"));
+    };
+    img.src = url;
+  });
+}
+
+async function addBox() {
+  const photoFile = document.getElementById("boxPhoto").files[0] || null;
+  if (photoFile && !photoFile.type.startsWith("image/")) {
+    alert("Choose an image file for the box condition photo.");
+    return;
+  }
+  if (photoFile && photoFile.size > MAX_BOX_PHOTO_SIZE) {
+    alert("The photo must be 10 MB or smaller.");
+    return;
+  }
+
+  const existingBox = boxes.find(existing => existing.id === editId);
+  const photos = Array.isArray(existingBox?.photos) ? existingBox.photos : [];
+  const box = {
+    name: document.getElementById("name").value,
+    type: document.getElementById("type").value,
+    zone: document.getElementById("zone").value,
+    location: document.getElementById("location").value,
+    gps: document.getElementById("gps").value,
+    splitter: document.getElementById("splitter").value,
+    total: Number(document.getElementById("total").value),
+    used: Number(document.getElementById("used").value),
+    power: normalizePowerValue(document.getElementById("power").value),
+    maintenance_status: "",
+    last_inspected_at: document.getElementById("lastInspectedAt").value || null,
+    next_inspection_due: document.getElementById("nextInspectionDue").value || null,
+    maintenance_notes: document.getElementById("maintenanceNotes").value.trim(),
+    photos: photos
+  };
+  const capacityStatus = getBoxCapacityStatus(box);
+  box.maintenance_status = capacityStatus === "Not set"
+    ? existingBox?.maintenance_status || "Normal"
+    : capacityStatus;
+
+  if (!box.name.trim()) {
+    alert("Enter a box name.");
+    return;
+  }
+  if (!box.location.trim()) {
+    alert("Enter the box location.");
+    return;
+  }
+  if (!box.gps.trim()) {
+    alert("Enter the box GPS coordinates.");
+    return;
+  }
+  const validationError =
+    getGpsError(box.gps, "GPS") ||
+    getPortCountsError(document.getElementById("total").value, document.getElementById("used").value, "Port counts") ||
+    getPowerError(box.power, "Power");
+  if (validationError) {
+    alert(validationError);
+    return;
+  }
+  if (box.last_inspected_at && box.next_inspection_due &&
+      box.next_inspection_due < box.last_inspected_at) {
+    alert("The next inspection date cannot be before the last inspection date.");
+    return;
+  }
+
+  const boxName = normalizeDuplicateValue(box.name);
+  const boxLocation = normalizeDuplicateValue(box.location);
+  const duplicateBoxes = boxes.filter(existing =>
+    existing.id !== editId &&
+    ((boxName && normalizeDuplicateValue(existing.name) === boxName) ||
+      (boxLocation && normalizeDuplicateValue(existing.location) === boxLocation))
+  );
+  if (duplicateBoxes.length > 0) {
+    const duplicateFields = [];
+    if (boxName && duplicateBoxes.some(existing => normalizeDuplicateValue(existing.name) === boxName)) {
+      duplicateFields.push("name");
+    }
+    if (boxLocation && duplicateBoxes.some(existing => normalizeDuplicateValue(existing.location) === boxLocation)) {
+      duplicateFields.push("location");
+    }
+    const matchingNames = [...new Set(duplicateBoxes.map(existing => existing.name).filter(Boolean))];
+    const examples = matchingNames.length ? " Existing box: " + matchingNames.join(", ") + "." : "";
+    if (!confirm("A box with the same " + duplicateFields.join(" and ") + " already exists." + examples + " Save anyway?")) {
+      return;
+    }
+  }
+
+  const wasEditing = editId !== null;
+  let result;
+  let savedBoxId = editId;
+  if (editId === null) {
+    result = await db.from("boxes").insert(box).select("id").single();
+    if (!result.error) savedBoxId = result.data.id;
+  } else {
+    result = await db.from("boxes").update(box).eq("id", editId);
+  }
+
+    if (result.error) {
+    alert("Could not save: " + result.error.message);
+    return;
+  }
+
+  if (photoFile) {
+    let photoBlob;
+    try {
+      photoBlob = await compressImage(photoFile);
+    } catch (e) {
+      editId = savedBoxId;
+      document.getElementById("saveBtn").textContent = "Update";
+      await loadBoxes();
+      alert("Box details were saved, but the photo could not be processed: " + e.message);
+      return;
+    }
+    const photoPath = `${savedBoxId}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+    const { error: uploadError } = await db.storage
+      .from(BOX_PHOTO_BUCKET)
+      .upload(photoPath, photoBlob, { contentType: "image/jpeg", upsert: false });
+    if (uploadError) {
+      editId = savedBoxId;
+      document.getElementById("saveBtn").textContent = "Update";
+      await loadBoxes();
+      alert("Box details were saved, but the photo could not be uploaded: " + uploadError.message);
+      return;
+    }
+
+    const updatedPhotos = [...photos, {
+      path: photoPath,
+      condition: document.getElementById("boxPhotoCondition").value,
+      captured_at: new Date().toISOString()
+    }];
+    const { error: photoRecordError } = await db.from("boxes")
+      .update({ photos: updatedPhotos })
+      .eq("id", savedBoxId);
+    if (photoRecordError) {
+      const { error: cleanupError } = await db.storage.from(BOX_PHOTO_BUCKET).remove([photoPath]);
+      editId = savedBoxId;
+      document.getElementById("saveBtn").textContent = "Update";
+      await loadBoxes();
+      const cleanupMessage = cleanupError ? " The uploaded photo could not be removed: " + cleanupError.message : "";
+      alert("Box details were saved, but the photo record could not be saved: " +
+        photoRecordError.message + cleanupMessage);
+      return;
+    }
+  }
+
+  showSaveNotice(wasEditing ? "Box updated successfully." : "Box added successfully.");
+  editId = null;
+  document.getElementById("saveBtn").textContent = "Save";
+    ["name", "zone", "location", "gps", "splitter", "total", "used", "power", "maintenanceNotes"].forEach(id => {
+    document.getElementById(id).value = "";
+  });
+  updateMaintenanceStatus();
+  document.getElementById("lastInspectedAt").value = "";
+  document.getElementById("nextInspectionDue").value = "";
+  document.getElementById("boxPhoto").value = "";
+  document.getElementById("boxPhotoCondition").value = "Neat";
+  await loadBoxes();
+  showTab("records");
+}
+
+function buildSummary() {
+  const totalBoxes = boxes.length;
+  const totalZones = [...new Set(boxes.map(box => (box.zone || "").trim()).filter(Boolean))].length;
+  const totalPorts = boxes.reduce((sum, box) => sum + (Number(box.total) || 0), 0);
+  const usedPorts = boxes.reduce((sum, box) => sum + (Number(box.used) || 0), 0);
+  const freePorts = Math.max(totalPorts - usedPorts, 0);
+  const boxesWithPhotos = boxes.filter(box => Array.isArray(box.photos) && box.photos.length > 0).length;
+  const boxesWithFreePorts = boxes.filter(box => {
+    const total = Number(box.total) || 0;
+    const used = Number(box.used) || 0;
+    return total > 0 && total - used > 0;
+  }).length;
+  const needsCleanup = boxes.filter(box =>
+    Array.isArray(box.photos) && box.photos.some(photo => (photo.condition || "").toLowerCase().includes("needs cleanup"))
+  ).length;
+  const splicePointCount = Array.isArray(points) ? points.length : 0;
+  const today = localDateString();
+  const overdueInspections = boxes.filter(box =>
+    box.next_inspection_due && box.next_inspection_due < today
+  ).length;
+  const maintenanceAttention = boxes.filter(box =>
+    getBoxCapacityStatus(box) === "Needs attention" || getBoxCapacityStatus(box) === "Critical"
+  ).length;
+
+  const summaryData = [
+    { label: "Boxes", value: totalBoxes, sub: "Total saved records" },
+    { label: "Zones", value: totalZones, sub: "Active areas" },
+    { label: "Free ports", value: freePorts, sub: `${usedPorts} used / ${totalPorts} total` },
+    { label: "Ready now", value: boxesWithFreePorts, sub: "Boxes with spare capacity" },
+    { label: "Photos", value: boxesWithPhotos, sub: "Boxes with evidence photos" },
+    { label: "Splice points", value: splicePointCount, sub: "Saved joints and closures" },
+    { label: "Overdue inspections", value: overdueInspections, sub: "Past their next inspection date" },
+    { label: "Capacity warnings", value: maintenanceAttention, sub: "Needs attention or critical" }
+  ];
+
+  const summaryEl = document.getElementById("reportSummary");
+  summaryEl.innerHTML = summaryData.map(item => `
+    <div class="summaryCard">
+      <div class="summaryLabel">${esc(item.label)}</div>
+      <div class="summaryValue">${esc(item.value)}</div>
+      <div class="summarySub">${esc(item.sub)}</div>
+    </div>
+  `).join("");
+
+  const zoneCounts = {};
+  for (const box of boxes) {
+    const zone = (box.zone || "").trim();
+    if (!zone) continue;
+    zoneCounts[zone] = (zoneCounts[zone] || 0) + 1;
+  }
+
+  const zoneRows = Object.entries(zoneCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const zoneSummaryEl = document.getElementById("zoneSummary");
+  if (!zoneRows.length) {
+    zoneSummaryEl.innerHTML = '<p class="summaryEmpty">No zones have been saved yet.</p>';
+    return;
+  }
+
+  zoneSummaryEl.innerHTML = `
+    <h3>Top zones</h3>
+    <div class="zoneList">
+      ${zoneRows.map(([zone, count], index) => `
+        <div class="zoneRow">
+          <span>${index + 1}. ${esc(zone)}</span>
+          <strong>${count}</strong>
+        </div>
+      `).join("")}
+    </div>
+  `;
+
+  if (needsCleanup > 0) {
+    zoneSummaryEl.innerHTML += `<div class="summarySub" style="margin-top:12px; color:#c62828; font-weight:bold;">${needsCleanup} boxes have photos marked as needing cleanup.</div>`;
+  }
+}
+
+function showBoxes() {
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+
+  const searchText = document.getElementById("search").value.toLowerCase();
+  const onlyFree = document.getElementById("onlyFree").checked;
+  const zoneChoice = document.getElementById("zoneFilter").value;
+
+  for (const box of boxes) {
+    const free = box.total - box.used;
+    const history = boxAuditHistory[String(box.id)] || [];
+    const historyFields = {
+      name: "Name",
+      type: "Type",
+      zone: "Zone",
+      location: "Location",
+      gps: "GPS",
+      splitter: "Splitter",
+      total: "Total ports",
+      used: "Ports used",
+      power: "Power",
+      maintenance_status: "Capacity status",
+      last_inspected_at: "Last inspection",
+      next_inspection_due: "Next inspection due",
+      maintenance_notes: "Maintenance notes",
+      photos: "Photos"
+    };
+
+    const matchesSearch =
+      (box.name || "").toLowerCase().includes(searchText) ||
+      (box.type || "").toLowerCase().includes(searchText) ||
+      (box.zone || "").toLowerCase().includes(searchText) ||
+      (box.location || "").toLowerCase().includes(searchText);
+
+    if (!matchesSearch) continue;
+    if (onlyFree && free <= 0) continue;
+    if (zoneChoice && (box.zone || "").trim() !== zoneChoice) continue;
+
+    const photos = Array.isArray(box.photos) ? box.photos : [];
+    const maintenanceStatus = getBoxCapacityStatus(box);
+    const historyHtml = history.length
+      ? `<details class="boxHistory">
+          <summary>Change history (${history.length})</summary>
+          ${history.map(entry => {
+            const before = entry.before_data || {};
+            const after = entry.after_data || {};
+            const changes = (entry.changed_fields || []).map(field => {
+              const label = historyFields[field] || field.replace(/_/g, " ");
+              if (field === "photos") return `<li>${esc(label)} updated</li>`;
+              const oldValue = before[field] ?? "—";
+              const newValue = after[field] ?? "—";
+              return `<li><b>${esc(label)}:</b> ${esc(oldValue)} → ${esc(newValue)}</li>`;
+            }).join("");
+            const action = entry.action === "insert" ? "Created"
+              : entry.action === "delete" ? "Deleted" : "Updated";
+            const timestamp = entry.created_at ? new Date(entry.created_at).toLocaleString() : "";
+            const actor = entry.actor_email || entry.actor_id || "Unknown user";
+            return `<div class="historyEntry">
+              <p><b>${esc(action)}</b>${timestamp ? " · " + esc(timestamp) : ""}</p>
+              <p>By ${esc(actor)}</p>
+              ${changes ? `<ul class="historyChanges">${changes}</ul>` : ""}
+            </div>`;
+          }).join("")}
+        </details>`
+      : `<details class="boxHistory"><summary>Change history (0)</summary><p class="summaryEmpty">History starts after the migration is installed; earlier changes are not available.</p></details>`;
+    const nextDue = box.next_inspection_due
+      ? `<span${box.next_inspection_due < localDateString() ? ' style="color:#c62828;font-weight:bold"' : ""}>${esc(box.next_inspection_due)}</span>`
+      : "";
+    const photoCards = photos.map(photo => {
+      const url = boxPhotoUrls[photo.path];
+      if (!url) return "";
+      const condition = photo.condition || "Condition not set";
+      const capturedAt = photo.captured_at ? new Date(photo.captured_at).toLocaleString() : "";
+      return `<figure class="boxPhoto">
+        <a href="${esc(url)}" target="_blank" rel="noopener"><img src="${esc(url)}" alt="${esc(box.name)} condition: ${esc(condition)}"></a>
+        <figcaption>${esc(condition)}${capturedAt ? " · " + esc(capturedAt) : ""}</figcaption>
+        <button class="boxPhotoDelete" type="button" onclick="deleteBoxPhoto(${box.id}, ${JSON.stringify(photo.path)})">Delete photo</button>
+      </figure>`;
+    }).join("");
+
+    list.innerHTML += `
+      <div class="card">
+        <b>${esc(box.name)}</b> (${esc(box.type)})
+        <dl class="recordDetails">
+          ${recordDetail("Zone", box.zone)}
+          ${recordDetail("Location", box.location)}
+          ${mapsRecordDetail(box.gps)}
+          ${recordDetail("Splitter", box.splitter)}
+          ${box.total !== null && box.total !== undefined && box.used !== null && box.used !== undefined
+            ? recordDetail("Ports", `${box.used} used of ${box.total}, ${free} free`)
+            : ""}
+          ${box.power !== null && box.power !== undefined && String(box.power).trim() !== ""
+            ? recordDetail("Power", `${box.power} dBm`)
+            : ""}
+          ${recordDetail("Capacity status", maintenanceStatus)}
+          ${recordDetail("Last inspection", box.last_inspected_at)}
+          ${nextDue ? `<div class="recordDetail"><dt>Next inspection</dt><dd>${nextDue}</dd></div>` : ""}
+          ${recordDetail("Maintenance notes", box.maintenance_notes)}
+        </dl>
+        ${photoCards ? `<div class="boxPhotos">${photoCards}</div>` : ""}
+        ${historyHtml}
+        <button onclick="openSplices(${box.id})">Splicing (${spliceCounts[box.id] || 0})</button>
+        <button class="edit" onclick="editBox(${box.id})">Edit</button>
+        <button class="delete" onclick="deleteBox(${box.id})">Delete</button>
+      </div>
+    `;
+  }
+
+  buildSummary();
+}
+
+async function deleteBoxPhoto(boxId, photoPath) {
+  if (!photoPath || !confirm("Delete this photo?")) return;
+
+  const box = boxes.find(b => b.id === boxId);
+  if (!box) return;
+
+  const remainingPhotos = (Array.isArray(box.photos) ? box.photos : []).filter(photo => photo.path !== photoPath);
+
+  const { error: storageError } = await db.storage.from(BOX_PHOTO_BUCKET).remove([photoPath]);
+  if (storageError) {
+    alert("Could not delete the photo from storage: " + storageError.message);
+    return;
+  }
+
+  const { error } = await db.from("boxes").update({ photos: remainingPhotos }).eq("id", boxId);
+  if (error) {
+    alert("Could not delete the photo: " + error.message);
+    return;
+  }
+
+  if (box.photos) box.photos = remainingPhotos;
+  delete boxPhotoUrls[photoPath];
+  await loadBoxAuditHistory();
+  await loadBoxPhotoUrls();
+  showBoxes();
+  showSaveNotice("Photo deleted.");
+}
+
+async function deleteBox(id) {
+  if (!confirm("Delete this box?")) return;
+
+  const box = boxes.find(b => b.id === id);
+  const photoPaths = Array.isArray(box?.photos) ? box.photos.map(photo => photo.path).filter(Boolean) : [];
+  if (photoPaths.length > 0) {
+    const { error: storageError } = await db.storage.from(BOX_PHOTO_BUCKET).remove(photoPaths);
+    if (storageError) {
+      alert("Could not remove all box photos: " + storageError.message);
+      return;
+    }
+  }
+
+  const { error } = await db.from("boxes").delete().eq("id", id);
+  if (error) {
+    alert("Could not delete: " + error.message);
+    return;
+  }
+
+  editId = null;
+  document.getElementById("saveBtn").textContent = "Save";
+  loadBoxes();
+}
+
+function editBox(id) {
+  const box = boxes.find(b => b.id === id);
+  if (!box) return;
+
+  document.getElementById("name").value = box.name;
+  document.getElementById("type").value = box.type;
+  document.getElementById("zone").value = box.zone || "";
+  document.getElementById("location").value = box.location;
+  document.getElementById("gps").value = box.gps;
+  document.getElementById("splitter").value = box.splitter;
+  document.getElementById("total").value = box.total;
+  document.getElementById("used").value = box.used;
+  document.getElementById("power").value = box.power;
+  updateMaintenanceStatus();
+  document.getElementById("lastInspectedAt").value = box.last_inspected_at || "";
+  document.getElementById("nextInspectionDue").value = box.next_inspection_due || "";
+  document.getElementById("maintenanceNotes").value = box.maintenance_notes || "";
+  document.getElementById("boxPhoto").value = "";
+  document.getElementById("boxPhotoCondition").value = "Neat";
+
+  editId = id;
+  document.getElementById("saveBtn").textContent = "Update";
+  showTab("add");
+}
+
+function useMyLocation(fieldId) {
+  if (!navigator.geolocation) {
+    alert("This device does not support location.");
+    return;
+  }
+
+    const gpsBox = document.getElementById(fieldId || "gps");
+  gpsBox.value = "Getting location...";
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const lat = position.coords.latitude.toFixed(6);
+      const lng = position.coords.longitude.toFixed(6);
+      gpsBox.value = lat + ", " + lng;
+    },
+    (error) => {
+      gpsBox.value = "";
+      alert("Could not get location: " + error.message);
+    },
+    { enableHighAccuracy: true, timeout: 15000 }
+  );
+}
+
+// ---------- ADMIN PANEL ----------
+
+// Calls our secure Edge Function and shows a clear message if it fails
+async function callAdmin(body) {
+  const { data, error } = await db.functions.invoke("manage-technicians", { body: body });
+
+  if (error) {
+    let message = error.message;
+    try {
+      const details = await error.context.json();
+      if (details.error) message = details.error;
+    } catch (e) {}
+    alert(message);
+    return null;
+  }
+  return data;
+}
+
+async function loadTechnicians() {
+  const data = await callAdmin({ action: "list" });
+  if (!data) return;
+
+  const techList = document.getElementById("techList");
+  techList.innerHTML = "";
+
+  if (data.technicians.length === 0) {
+    techList.textContent = "No technicians yet.";
+    return;
+  }
+
+  for (const tech of data.technicians) {
+    const row = document.createElement("div");
+    row.className = "techRow";
+
+    const label = document.createElement("span");
+    label.textContent = tech.email;
+
+    const btn = document.createElement("button");
+    btn.className = "delete";
+    btn.textContent = "Remove";
+    btn.onclick = () => removeTechnician(tech.id, tech.email);
+
+    row.appendChild(label);
+    row.appendChild(btn);
+    techList.appendChild(row);
+  }
+}
+
+async function addTechnician() {
+  const email = document.getElementById("techEmail").value.trim();
+  const password = document.getElementById("techPassword").value;
+
+  if (!email || password.length < 8) {
+    alert("Enter an email and a password of at least 8 characters.");
+    return;
+  }
+
+  const data = await callAdmin({ action: "create", email: email, password: password });
+  if (!data) return;
+
+  document.getElementById("techEmail").value = "";
+  document.getElementById("techPassword").value = "";
+  alert("Technician added. Give them the email and password, and ask them to change the password after their first login.");
+  loadTechnicians();
+}
+
+async function removeTechnician(userId, email) {
+  if (!confirm("Remove " + email + "? They will no longer be able to log in.")) return;
+
+  const data = await callAdmin({ action: "remove", userId: userId });
+  if (!data) return;
+  loadTechnicians();
+}
+
+// ---------- SPLICING ----------
+
+// Standard 12-colour fibre order (used for tubes and for fibres inside a tube)
+const FIBRE_COLOURS = [
+  { name: "Blue",   hex: "#1e66d0" },
+  { name: "Orange", hex: "#f28c1c" },
+  { name: "Green",  hex: "#2e9e4f" },
+  { name: "Brown",  hex: "#8b5a2b" },
+  { name: "Slate",  hex: "#708090" },
+  { name: "White",  hex: "#ffffff" },
+  { name: "Red",    hex: "#d62828" },
+  { name: "Black",  hex: "#1b1b1b" },
+  { name: "Yellow", hex: "#f2c200" },
+  { name: "Violet", hex: "#7b3fbf" },
+  { name: "Rose",   hex: "#f07fa6" },
+  { name: "Aqua",   hex: "#18b6c9" }
+];
+
+let spliceBoxId = null;
+let splices = [];
+let savedScroll = 0;
+let editSpliceId = null;
+let spliceParentKind = "box";
+let spliceCounts = {};
+
+// Works out the tube and fibre colour from a fibre number (12 fibres per tube)
+function fibreInfo(number, cores) {
+  const n = Number(number);
+  if (!Number.isInteger(n) || n < 1 || n > cores) return null;
+  const tubeIndex = Math.floor((n - 1) / 12);
+  const fibreIndex = (n - 1) % 12;
+  return {
+    tubeNo: tubeIndex + 1,
+    tube: FIBRE_COLOURS[tubeIndex],
+    fibre: FIBRE_COLOURS[fibreIndex]
+  };
+}
+
+// Colour dots + words, e.g. "(dot) Tube 2 Orange · (dot) Fibre Slate"
+function colourHtml(info) {
+  if (!info) return "";
+  return '<span class="dot" style="background:' + info.tube.hex + '"></span>Tube ' +
+    info.tubeNo + " " + info.tube.name +
+    ' · <span class="dot" style="background:' + info.fibre.hex + '"></span>Fibre ' +
+    info.fibre.name;
+}
+
+// Shows the colours under the fibre number as you type (side is "A" or "B")
+function showFibreColour(side) {
+  const cores = Number(document.getElementById("cable" + side + "Cores").value);
+  const num = document.getElementById("fibre" + side).value;
+  const target = document.getElementById("colour" + side);
+
+  if (!num) {
+    target.innerHTML = "";
+    return;
+  }
+
+  const info = fibreInfo(num, cores);
+  if (!info) {
+    target.textContent = "Fibre number must be a whole number from 1 to " + cores;
+    return;
+  }
+  target.innerHTML = colourHtml(info);
+}
+
+// How many splices each box has (shown on the box cards)
+async function loadSpliceCounts() {
+  const { data, error } = await db.rpc("splice_counts");
+  spliceCounts = {};
+  if (error || !data) return;
+  for (const r of data) {
+    spliceCounts[r.for_box] = Number(r.total);
+  }
+}
+
+// Puts the form back to "add a new splice" mode
+function resetSpliceEdit() {
+  editSpliceId = null;
+  document.getElementById("spliceCount").disabled = false;
+  document.getElementById("spliceCount").value = "1";
+  document.getElementById("saveSpliceBtn").textContent = "Save splice";
+  document.getElementById("spliceFormTitle").textContent = "Add a splice";
+  document.getElementById("cancelSpliceBtn").style.display = "none";
+}
+
+async function openSplices(id, kind) {
+  const isPoint = kind === "point";
+  const item = isPoint ? points.find(p => p.id === id) : boxes.find(b => b.id === id);
+  if (!item) return;
+  const typeText = isPoint ? item.point_type : item.type;
+
+  spliceParentKind = isPoint ? "point" : "box";
+  spliceBoxId = id;
+  savedScroll = window.scrollY;
+  resetSpliceEdit();
+
+  document.getElementById("spliceTitle").textContent =
+    "Splicing · " + item.name + " (" + typeText + ")";
+
+  // Details shown at the top of the printed sheet
+  document.getElementById("printHeader").innerHTML =
+    "<h2>FibreLog splice record</h2>" +
+    "<p><b>" + esc(item.name) + "</b> (" + esc(typeText) + ")<br>" +
+    (item.zone ? "Zone: " + esc(item.zone) + "<br>" : "") +
+    "Location: " + esc(item.location) + "<br>" +
+    "GPS: " + esc(item.gps) + "<br>" +
+    (item.notes ? "Notes: " + esc(item.notes) + "<br>" : "") +
+    "Printed: " + new Date().toLocaleDateString() + "</p>";
+
+  ["cableAName", "cableBName", "fibreA", "fibreB", "spliceLoss", "spliceNote"].forEach(fieldId => {
+    document.getElementById(fieldId).value = "";
+  });
+  document.getElementById("cableACores").value = "24";
+  document.getElementById("cableBCores").value = "24";
+  showFibreColour("A");
+  showFibreColour("B");
+
+  document.getElementById("app").style.display = "none";
+  document.getElementById("spliceView").style.display = "block";
+  window.scrollTo(0, 0);
+
+  await loadSplices(true);
+}
+
+async function closeSplices() {
+  spliceBoxId = null;
+  resetSpliceEdit();
+  document.getElementById("spliceView").style.display = "none";
+  document.getElementById("app").style.display = "block";
+
+  // Refresh the splice counts on the cards, then go back to where we were
+  await loadSpliceCounts();
+  showBoxes();
+  window.scrollTo(0, savedScroll);
+}
+
+async function loadSplices(prefill) {
+  const { data, error } = await db
+    .from("splices")
+    .select("*")
+        .eq(spliceParentKind === "box" ? "box_id" : "point_id", spliceBoxId)
+    .order("id", { ascending: true });
+
+  if (error) {
+    alert("Could not load splices: " + error.message);
+    return;
+  }
+  splices = data;
+
+  // Carry on where the last splice stopped: reuse its cable names and sizes
+  if (prefill && splices.length > 0) {
+    const last = splices[splices.length - 1];
+    document.getElementById("cableAName").value = last.cable_a_name || "";
+    document.getElementById("cableBName").value = last.cable_b_name || "";
+    document.getElementById("cableACores").value = String(last.cable_a_cores);
+    document.getElementById("cableBCores").value = String(last.cable_b_cores);
+  }
+
+  showSplices();
+}
+
+function showSplices() {
+  // The neat table used when printing
+  const table = document.getElementById("spliceTable");
+  if (splices.length === 0) {
+    table.innerHTML = "<p>No splices recorded.</p>";
+  } else {
+    let html = '<table class="printTable"><tr><th>#</th><th>Cable A</th><th>Fibre A</th>' +
+      "<th>Cable B</th><th>Fibre B</th><th>Loss / note</th></tr>";
+    splices.forEach((s, i) => {
+      const a = fibreInfo(s.fibre_a, s.cable_a_cores);
+      const b = fibreInfo(s.fibre_b, s.cable_b_cores);
+      html += "<tr><td>" + (i + 1) + "</td>" +
+        "<td>" + esc(s.cable_a_name || "Cable A") + "<br>" + esc(s.cable_a_cores) + " core</td>" +
+        "<td>" + esc(s.fibre_a) + "<br>" + colourHtml(a) + "</td>" +
+        "<td>" + esc(s.cable_b_name || "Cable B") + "<br>" + esc(s.cable_b_cores) + " core</td>" +
+        "<td>" + esc(s.fibre_b) + "<br>" + colourHtml(b) + "</td>" +
+        "<td>" + (s.loss_db ? esc(s.loss_db) + " dB<br>" : "") + esc(s.note || "") + "</td></tr>";
+    });
+    html += "</table>";
+    table.innerHTML = html;
+  }
+
+  // The cards shown on screen
+  const listBox = document.getElementById("spliceList");
+  listBox.innerHTML = "";
+
+  if (splices.length === 0) {
+    listBox.textContent = "No splices recorded yet.";
+    return;
+  }
+
+  for (const s of splices) {
+    const a = fibreInfo(s.fibre_a, s.cable_a_cores);
+    const b = fibreInfo(s.fibre_b, s.cable_b_cores);
+
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <b>${esc(s.cable_a_name || "Cable A")}</b> (${esc(s.cable_a_cores)} core) · fibre ${esc(s.fibre_a)}<br>
+      ${colourHtml(a)}<br>
+      ↓ spliced to<br>
+      <b>${esc(s.cable_b_name || "Cable B")}</b> (${esc(s.cable_b_cores)} core) · fibre ${esc(s.fibre_b)}<br>
+      ${colourHtml(b)}<br>
+      ${s.loss_db ? "Loss: " + esc(s.loss_db) + " dB<br>" : ""}
+      ${s.note ? "Note: " + esc(s.note) + "<br>" : ""}
+      <br>
+      <button class="edit" onclick="editSplice(${s.id})">Edit</button>
+      <button class="delete" onclick="deleteSplice(${s.id})">Delete</button>
+    `;
+    listBox.appendChild(card);
+  }
+}
+
+// Loads one splice into the form so it can be corrected
+function editSplice(id) {
+  const s = splices.find(x => x.id === id);
+  if (!s) return;
+
+  editSpliceId = id;
+  document.getElementById("cableAName").value = s.cable_a_name || "";
+  document.getElementById("cableACores").value = String(s.cable_a_cores);
+  document.getElementById("fibreA").value = s.fibre_a;
+  document.getElementById("cableBName").value = s.cable_b_name || "";
+  document.getElementById("cableBCores").value = String(s.cable_b_cores);
+  document.getElementById("fibreB").value = s.fibre_b;
+  document.getElementById("spliceLoss").value = s.loss_db || "";
+  document.getElementById("spliceNote").value = s.note || "";
+
+  document.getElementById("spliceCount").value = "1";
+  document.getElementById("spliceCount").disabled = true;
+  document.getElementById("saveSpliceBtn").textContent = "Update splice";
+  document.getElementById("spliceFormTitle").textContent = "Edit splice";
+  document.getElementById("cancelSpliceBtn").style.display = "inline";
+
+  showFibreColour("A");
+  showFibreColour("B");
+  window.scrollTo(0, 0);
+}
+
+function cancelSpliceEdit() {
+  resetSpliceEdit();
+  ["fibreA", "fibreB", "spliceLoss", "spliceNote"].forEach(id => {
+    document.getElementById(id).value = "";
+  });
+  showFibreColour("A");
+  showFibreColour("B");
+}
+
+async function addSplice() {
+  const aCores = Number(document.getElementById("cableACores").value);
+  const bCores = Number(document.getElementById("cableBCores").value);
+  const fibreA = Number(document.getElementById("fibreA").value);
+  const fibreB = Number(document.getElementById("fibreB").value);
+  const count = editSpliceId === null ? Number(document.getElementById("spliceCount").value) : 1;
+
+  if (!Number.isInteger(count) || count < 1) {
+    alert("Fibres in a row must be a whole number, 1 or more.");
+    return;
+  }
+
+  // The first and the last fibre of the row must both fit inside each cable
+  if (!fibreInfo(fibreA, aCores) || !fibreInfo(fibreA + count - 1, aCores) ||
+      !fibreInfo(fibreB, bCores) || !fibreInfo(fibreB + count - 1, bCores)) {
+    alert("These fibre numbers do not fit inside the cable sizes. Cable A allows 1 to " + aCores +
+      " and cable B allows 1 to " + bCores + ", counting the whole row.");
+    return;
+  }
+
+  const cableAName = document.getElementById("cableAName").value.trim();
+  const cableBName = document.getElementById("cableBName").value.trim();
+  const loss = document.getElementById("spliceLoss").value.trim();
+  const note = document.getElementById("spliceNote").value.trim();
+
+  const rows = [];
+  for (let i = 0; i < count; i++) {
+    rows.push({
+            box_id: spliceParentKind === "box" ? spliceBoxId : null,
+      point_id: spliceParentKind === "point" ? spliceBoxId : null,
+      cable_a_name: cableAName,
+      cable_a_cores: aCores,
+      fibre_a: fibreA + i,
+      cable_b_name: cableBName,
+      cable_b_cores: bCores,
+      fibre_b: fibreB + i,
+      loss_db: loss,
+      note: note
+    });
+  }
+
+  // Warn if any of these fibres is already spliced at this box
+  const alreadyUsed = rows.some(r => splices.some(s =>
+    s.id !== editSpliceId && (
+      ((s.cable_a_name || "") === r.cable_a_name && s.fibre_a === r.fibre_a) ||
+      ((s.cable_b_name || "") === r.cable_b_name && s.fibre_b === r.fibre_b)
+    )
+  ));
+  if (alreadyUsed && !confirm("One of these fibres is already spliced at this box. Save anyway?")) {
+    return;
+  }
+
+  let result;
+  if (editSpliceId === null) {
+    result = await db.from("splices").insert(rows);
+  } else {
+    result = await db.from("splices").update(rows[0]).eq("id", editSpliceId);
+  }
+
+  if (result.error) {
+    alert("Could not save: " + result.error.message);
+    return;
+  }
+
+  const wasEditing = editSpliceId !== null;
+  showSaveNotice(wasEditing
+    ? "Splice updated successfully."
+    : rows.length === 1 ? "Splice saved successfully." : rows.length + " splices saved successfully.");
+  resetSpliceEdit();
+
+  // Get ready for the next splice: move on to the next fibre numbers
+  const nextA = fibreA + count;
+  const nextB = fibreB + count;
+  document.getElementById("fibreA").value = (!wasEditing && nextA <= aCores) ? nextA : "";
+  document.getElementById("fibreB").value = (!wasEditing && nextB <= bCores) ? nextB : "";
+  document.getElementById("spliceLoss").value = "";
+  document.getElementById("spliceNote").value = "";
+  showFibreColour("A");
+  showFibreColour("B");
+
+  await loadSplices(false);
+}
+
+async function deleteSplice(id) {
+  if (!confirm("Delete this splice record?")) return;
+
+  const { error } = await db.from("splices").delete().eq("id", id);
+  if (error) {
+    alert("Could not delete: " + error.message);
+    return;
+  }
+
+  if (editSpliceId === id) cancelSpliceEdit();
+  await loadSplices(false);
+}
+
+// ---------- SPLICE POINTS ----------
+
+let points = [];
+let editPointId = null;
+
+// Shows the splitter boxes only when "This point has a splitter" is ticked
+function togglePointSplitter() {
+  const on = document.getElementById("pHasSplitter").checked;
+  document.getElementById("pSplitterBlock").style.display = on ? "block" : "none";
+}
+
+async function loadPoints() {
+  const { data, error } = await db
+    .from("splice_points")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    alert("Could not load splice points: " + error.message);
+    return;
+  }
+  points = data;
+  fillZones();
+  showPoints();
+  if (boxMap) updateBoxMap();
+}
+
+// Puts the form back to "add a new point" mode
+function resetPointForm() {
+  editPointId = null;
+    ["pName", "pZone", "pLocation", "pGps", "pSplitter", "pTotal", "pUsed", "pPower", "pNotes"].forEach(id => {
+    document.getElementById(id).value = "";
+  });
+  document.getElementById("pType").value = "Closure";
+  document.getElementById("pHasSplitter").checked = false;
+  togglePointSplitter();
+  document.getElementById("savePointBtn").textContent = "Save splice point";
+  document.getElementById("pointFormTitle").textContent = "Add a splice point";
+  document.getElementById("cancelPointBtn").style.display = "none";
+}
+
+function cancelPointEdit() {
+  resetPointForm();
+}
+
+async function savePoint() {
+  const name = document.getElementById("pName").value.trim();
+  if (!name) {
+    alert("Type a name for the splice point first.");
+    return;
+  }
+
+  const hasSplitter = document.getElementById("pHasSplitter").checked;
+
+  // Empty number boxes become "nothing" instead of 0
+  const num = (id) => {
+    const v = document.getElementById(id).value;
+    return v === "" ? null : Number(v);
+  };
+
+  const point = {
+    name: name,
+    point_type: document.getElementById("pType").value,
+    zone: document.getElementById("pZone").value.trim(),
+    location: document.getElementById("pLocation").value.trim(),
+    gps: document.getElementById("pGps").value.trim(),
+    has_splitter: hasSplitter,
+    splitter: hasSplitter ? document.getElementById("pSplitter").value.trim() : null,
+    total: hasSplitter ? num("pTotal") : null,
+    used: hasSplitter ? num("pUsed") : null,
+    power: hasSplitter ? normalizePowerValue(document.getElementById("pPower").value) : null,
+        notes: document.getElementById("pNotes").value.trim()
+  };
+
+  const validationError =
+    getGpsError(point.gps, "GPS") ||
+    (hasSplitter
+      ? getPortCountsError(document.getElementById("pTotal").value, document.getElementById("pUsed").value, "Port counts") ||
+        getPowerError(point.power, "Power")
+      : "");
+  if (validationError) {
+    alert(validationError);
+    return;
+  }
+
+  const pointName = normalizeDuplicateValue(point.name);
+  const duplicatePoint = points.find(existing =>
+    existing.id !== editPointId && normalizeDuplicateValue(existing.name) === pointName
+  );
+  if (duplicatePoint && !confirm('A splice point named "' + duplicatePoint.name + '" already exists. Save anyway?')) {
+    return;
+  }
+
+  const wasEditing = editPointId !== null;
+  let result;
+  if (editPointId === null) {
+    result = await db.from("splice_points").insert(point);
+  } else {
+    result = await db.from("splice_points").update(point).eq("id", editPointId);
+  }
+
+  if (result.error) {
+    alert("Could not save: " + result.error.message);
+    return;
+  }
+
+  showSaveNotice(wasEditing ? "Splice point updated successfully." : "Splice point added successfully.");
+  resetPointForm();
+  loadPoints();
+}
+
+function showPoints() {
+  const listBox = document.getElementById("pointList");
+  listBox.innerHTML = "";
+
+  const searchText = document.getElementById("pSearch").value.toLowerCase();
+  let shown = 0;
+
+  for (const p of points) {
+    const matches =
+      (p.name || "").toLowerCase().includes(searchText) ||
+      (p.point_type || "").toLowerCase().includes(searchText) ||
+      (p.zone || "").toLowerCase().includes(searchText) ||
+      (p.location || "").toLowerCase().includes(searchText);
+    if (!matches) continue;
+    shown++;
+
+    let splitterDetails = "";
+    if (p.has_splitter) {
+      splitterDetails = recordDetail("Splitter", p.splitter);
+      if (p.total !== null && p.used !== null) {
+        splitterDetails += recordDetail("Ports", `${p.used} used of ${p.total}, ${p.total - p.used} free`);
+      }
+      if (p.power !== null && p.power !== undefined && String(p.power).trim() !== "") {
+        splitterDetails += recordDetail("Power", `${p.power} dBm`);
+      }
+    }
+    const notes = p.notes ? esc(p.notes).replace(/\n/g, "<br>") : "";
+
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <b>${esc(p.name)}</b> (${esc(p.point_type)})
+      <dl class="recordDetails">
+        ${recordDetail("Zone", p.zone)}
+        ${recordDetail("Location", p.location)}
+        ${mapsRecordDetail(p.gps)}
+        ${splitterDetails}
+        ${notes ? `<div class="recordDetail"><dt>Notes</dt><dd>${notes}</dd></div>` : ""}
+      </dl>
+      <button onclick="openSplices(${p.id}, 'point')">Splicing</button>
+      <button class="edit" onclick="editPoint(${p.id})">Edit</button>
+      <button class="delete" onclick="deletePoint(${p.id})">Delete</button>
+    `;
+    listBox.appendChild(card);
+  }
+
+  if (shown === 0) {
+    listBox.textContent = points.length === 0 ? "No splice points yet." : "No matches.";
+  }
+}
+
+function editPoint(id) {
+  const p = points.find(x => x.id === id);
+  if (!p) return;
+
+  editPointId = id;
+  document.getElementById("pName").value = p.name || "";
+  document.getElementById("pType").value = p.point_type || "Closure";
+  document.getElementById("pZone").value = p.zone || "";
+  document.getElementById("pLocation").value = p.location || "";
+  document.getElementById("pGps").value = p.gps || "";
+  document.getElementById("pHasSplitter").checked = !!p.has_splitter;
+  document.getElementById("pSplitter").value = p.splitter || "";
+  document.getElementById("pTotal").value = p.total ?? "";
+  document.getElementById("pUsed").value = p.used ?? "";
+  document.getElementById("pPower").value = p.power || "";
+    document.getElementById("pNotes").value = p.notes || "";
+  togglePointSplitter();
+
+  document.getElementById("savePointBtn").textContent = "Update splice point";
+  document.getElementById("pointFormTitle").textContent = "Edit splice point";
+  document.getElementById("cancelPointBtn").style.display = "inline";
+  window.scrollTo(0, 0);
+}
+
+async function deletePoint(id) {
+  if (!confirm("Delete this splice point and all its splices? This cannot be undone.")) return;
+
+  const { error } = await db.from("splice_points").delete().eq("id", id);
+  if (error) {
+    alert("Could not delete: " + error.message);
+    return;
+  }
+
+  if (editPointId === id) resetPointForm();
+  loadPoints();
+}
+    // ---------- SUPERADMIN ----------
+
+// Calls the manage-companies function and shows a clear message if it fails
+async function callSuper(body) {
+  const { data, error } = await db.functions.invoke("manage-companies", { body: body });
+
+  if (error) {
+    let message = error.message;
+    try {
+      const details = await error.context.json();
+      if (details.error) message = details.error;
+    } catch (e) {}
+    alert(message);
+    return null;
+  }
+  return data;
+}
+
+function timeAgo(dateText) {
+  if (!dateText) return "never";
+  const days = Math.floor((Date.now() - new Date(dateText).getTime()) / 86400000);
+  if (days <= 0) return "today";
+  if (days === 1) return "yesterday";
+  return days + " days ago";
+}
+
+async function loadCompanies() {
+  const data = await callSuper({ action: "list" });
+  if (!data) return;
+
+  const listBox = document.getElementById("companyList");
+  listBox.innerHTML = "";
+
+  if (data.companies.length === 0) {
+    listBox.textContent = "No companies yet.";
+    return;
+  }
+
+  for (const company of data.companies) {
+    const isActive = company.active !== false;
+
+    const card = document.createElement("div");
+    card.className = "card";
+    if (!isActive) card.classList.add("suspended");
+
+    // Company name + buttons
+    const head = document.createElement("div");
+    head.className = "techRow";
+
+    const nameEl = document.createElement("b");
+    nameEl.textContent = company.name + (isActive ? "" : " (suspended)");
+
+    const btns = document.createElement("div");
+    btns.className = "buttons";
+
+    const toggleBtn = document.createElement("button");
+    toggleBtn.className = isActive ? "edit" : "";
+    toggleBtn.textContent = isActive ? "Suspend" : "Reactivate";
+    toggleBtn.onclick = () => setCompanyActive(company.id, company.name, !isActive);
+
+    const delBtn = document.createElement("button");
+    delBtn.className = "delete";
+    delBtn.textContent = "Delete";
+    delBtn.onclick = () => deleteCompany(company.id, company.name);
+
+    btns.appendChild(toggleBtn);
+    btns.appendChild(delBtn);
+    head.appendChild(nameEl);
+    head.appendChild(btns);
+    card.appendChild(head);
+
+    // Usage numbers
+    const usage = document.createElement("p");
+    usage.textContent =
+      company.technicians + " technicians · " +
+      company.boxes + " boxes · last box added " + timeAgo(company.lastBoxAt);
+    card.appendChild(usage);
+
+    // This company's admins
+    if (company.admins.length === 0) {
+      const none = document.createElement("p");
+      none.textContent = "No admin yet.";
+      card.appendChild(none);
+    }
+
+    for (const a of company.admins) {
+      const row = document.createElement("div");
+      row.className = "techRow";
+      const label = document.createElement("span");
+      label.textContent = a.email;
+      const btn = document.createElement("button");
+      btn.className = "delete";
+      btn.textContent = "Remove";
+      btn.onclick = () => removeAdmin(a.id, a.email);
+      row.appendChild(label);
+      row.appendChild(btn);
+      card.appendChild(row);
+    }
+
+    // Add an admin to this company
+    const emailInput = document.createElement("input");
+    emailInput.type = "email";
+    emailInput.placeholder = "New admin email";
+    const passInput = document.createElement("input");
+    passInput.type = "text";
+    passInput.placeholder = "Temporary password (min 8 characters)";
+    const addBtn = document.createElement("button");
+    addBtn.textContent = "Add admin";
+    addBtn.onclick = () => addAdmin(company.id, emailInput, passInput);
+
+    card.appendChild(emailInput);
+    card.appendChild(passInput);
+    card.appendChild(addBtn);
+
+    listBox.appendChild(card);
+  }
+}
+
+async function setCompanyActive(companyId, name, active) {
+  const question = active
+    ? "Reactivate " + name + "? Their users will be able to log in again."
+    : "Suspend " + name + "? Nobody in this company can log in until you reactivate it. Their data is kept.";
+  if (!confirm(question)) return;
+
+  const data = await callSuper({ action: "setActive", companyId: companyId, active: active });
+  if (!data) return;
+  loadCompanies();
+}
+    
+
+async function addCompany() {
+  const name = document.getElementById("companyName").value.trim();
+  if (!name) {
+    alert("Type the company name first.");
+    return;
+  }
+
+  const data = await callSuper({ action: "createCompany", name: name });
+  if (!data) return;
+
+  document.getElementById("companyName").value = "";
+  loadCompanies();
+}
+
+async function addAdmin(companyId, emailInput, passInput) {
+  const email = emailInput.value.trim();
+  const password = passInput.value;
+
+  if (!email || password.length < 8) {
+    alert("Enter an email and a password of at least 8 characters.");
+    return;
+  }
+
+  const data = await callSuper({
+    action: "createAdmin",
+    companyId: companyId,
+    email: email,
+    password: password
+  });
+  if (!data) return;
+
+  alert("Admin added. Give them the email and password, and ask them to change the password after their first login.");
+  loadCompanies();
+}
+
+async function removeAdmin(userId, email) {
+  if (!confirm("Remove " + email + "? They will no longer be able to log in.")) return;
+
+  const data = await callSuper({ action: "removeAdmin", userId: userId });
+  if (!data) return;
+  loadCompanies();
+}
+
+async function deleteCompany(companyId, name) {
+  if (!confirm("Delete " + name + "? This cannot be undone.")) return;
+
+  const data = await callSuper({ action: "deleteCompany", companyId: companyId });
+  if (!data) return;
+  loadCompanies();
+}
+    
+// ---------- PASSWORDS ----------
+
+function togglePasswordBox() {
+  const box = document.getElementById("passwordBox");
+  box.style.display = box.style.display === "none" ? "block" : "none";
+}
+
+async function changePassword() {
+  const newPassword = document.getElementById("newPassword").value;
+
+  if (newPassword.length < 8) {
+    alert("Your password must be at least 8 characters.");
+    return;
+  }
+
+  const { error } = await db.auth.updateUser({ password: newPassword });
+  if (error) {
+    alert("Could not change password: " + error.message);
+    return;
+  }
+
+  document.getElementById("newPassword").value = "";
+  document.getElementById("passwordBox").style.display = "none";
+  alert("Password changed.");
+}
+
+async function forgotPassword() {
+  const email = document.getElementById("email").value.trim();
+  if (!email) {
+    alert("Type your email in the email box first, then press Forgot password.");
+    return;
+  }
+
+  const { error } = await db.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + window.location.pathname
+  });
+
+  if (error) {
+    alert("Could not send the reset email: " + error.message);
+    return;
+  }
+  alert("If that email has an account, a reset link has been sent. Check your inbox (and spam).");
+}
+
+function showResetBox() {
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("app").style.display = "none";
+  document.getElementById("resetBox").style.display = "block";
+}
+
+async function saveNewPassword() {
+  const newPassword = document.getElementById("resetPassword").value;
+
+  if (newPassword.length < 8) {
+    alert("Your password must be at least 8 characters.");
+    return;
+  }
+
+  const { error } = await db.auth.updateUser({ password: newPassword });
+  if (error) {
+    alert("Could not save the new password: " + error.message);
+    return;
+  }
+
+  alert("Password saved. You are now signed in.");
+  recovering = false;
+  history.replaceState(null, "", window.location.pathname);
+  document.getElementById("resetPassword").value = "";
+  document.getElementById("resetBox").style.display = "none";
+  checkLogin();
+}
+
+// ---------- LOGIN ----------
+
+async function login() {
+  const btn = document.getElementById("loginBtn");
+  if (btn.disabled) return;
+
+  btn.disabled = true;
+  btn.textContent = "Logging in...";
+
+  const { error } = await db.auth.signInWithPassword({
+    email: document.getElementById("email").value,
+    password: document.getElementById("password").value
+  });
+
+  btn.disabled = false;
+  btn.textContent = "Log in";
+
+    if (error) {
+    if (error.message.toLowerCase().includes("banned")) {
+      alert("This account is suspended. Please contact FibreLog on 0758 796 040.");
+    } else {
+      alert("Login failed: " + error.message);
+    }
+    return;
+  }
+  checkLogin();
+}
+
+function togglePassword() {
+  const box = document.getElementById("password");
+  box.type = box.type === "password" ? "text" : "password";
+}
+
+async function logout() {
+  await db.auth.signOut();
+  checkLogin();
+}
+
+async function checkLogin() {
+  if (recovering) return;
+
+  const { data } = await db.auth.getSession();
+  const session = data.session;
+
+    if (!session) {
+    document.getElementById("loginBox").style.display = "block";
+    document.getElementById("app").style.display = "none";
+    document.getElementById("superPanel").style.display = "none";
+        document.getElementById("superPanel").style.display = "none";
+    document.getElementById("spliceView").style.display = "none";
+    return;
+  }
+
+  // Find out which company and role this person has
+  const { data: profile } = await db
+    .from("profiles")
+    .select("role, company_id")
+    .eq("id", session.user.id)
+    .maybeSingle();
+
+  if (!profile) {
+    alert("This account is not linked to a company. Please contact the administrator.");
+    await db.auth.signOut();
+    checkLogin();
+    return;
+  }
+
+   if (profile.role === "superadmin") {
+    document.getElementById("loginBox").style.display = "none";
+    document.getElementById("app").style.display = "none";
+    document.getElementById("superPanel").style.display = "block";
+    loadCompanies();
+    return;
+  }
+  const { data: company } = await db
+    .from("companies")
+    .select("name")
+    .eq("id", profile.company_id)
+    .maybeSingle();
+
+  document.getElementById("whoami").textContent =
+    (company ? company.name : "Your company") + " · " + profile.role;
+
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("app").style.display = "block";
+
+  const isAdmin = profile.role === "admin";
+  document.getElementById("adminPanel").style.display = isAdmin ? "block" : "none";
+    document.getElementById("tabTeam").style.display = isAdmin ? "block" : "none";
+  showTab("records");
+
+  loadBoxes();
+  if (isAdmin) loadTechnicians();
+}
+
+    // Press Enter in the email or password box to log in
+["email", "password"].forEach(id => {
+  document.getElementById(id).addEventListener("keydown", (e) => {
+    if (e.key === "Enter") login();
+  });
+});
+    
+if (recovering) {
+  showResetBox();
+} else {
+  checkLogin();
+}
+    
+// Lets phones install FibreLog like an app
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js");
+}
+    
+// Show the opening screen for a moment, then fade it out
+const splashStart = Date.now();
+window.addEventListener("load", () => {
+  const wait = Math.max(0, 1200 - (Date.now() - splashStart));
+  setTimeout(() => {
+    const splash = document.getElementById("splash");
+    splash.classList.add("hide");
+    setTimeout(() => splash.remove(), 600);
+  }, wait);
+});
+  </script>
+</body>
+</html>
